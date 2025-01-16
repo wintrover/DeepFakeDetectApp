@@ -187,6 +187,7 @@ fun AIScreen() {
                     containerColor = Color.White,
                     contentColor = Color.Black
                 ),
+                enabled = imageURI != null || imageUrl.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(50.dp)
