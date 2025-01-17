@@ -26,7 +26,6 @@
         </activity>
         <activity android:name=".AIActivity" />
         <activity android:name=".DeepfakeActivity" />
-        <activity android:name=".ResultActivity" />
     </application>
 
 </manifest>

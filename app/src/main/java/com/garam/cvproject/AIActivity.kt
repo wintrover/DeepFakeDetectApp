@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -34,6 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -63,17 +67,23 @@ fun AIScreen() {
     var textFieldValue by remember { mutableStateOf("") }
     var showTextField by remember { mutableStateOf(false) }
 
-    // Photo Picker launcher
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
             if (uri != null) {
                 imageURI = uri
-                imageUrl = "" // Clear image URL when a new image is selected
+                imageUrl = ""
             }
         }
 
+    // 배경 색상
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF404040), Color(0xFFBFBFBF))
+                )
+            )
     ) {
         Column(
             modifier = Modifier
@@ -82,17 +92,26 @@ fun AIScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 여백
-            Text("AI Screen", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.weight(0.05f)) // 비율 기반 여백
+            // 상단 타이틀
+            Spacer(modifier = Modifier.weight(0.1f))
+            Text(
+                "AI Screen",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.shadow(8.dp)
+            )
+            Spacer(modifier = Modifier.weight(0.05f))
 
             // 이미지 컨테이너
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .weight(0.4f)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Color.Transparent)
+                    .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
+                contentAlignment = Alignment.Center
             ) {
                 if (imageURI != null) {
                     Image(
@@ -110,21 +129,22 @@ fun AIScreen() {
                     Text("image", fontSize = 20.sp, color = Color.White)
                 }
             }
-            Column(
+            Spacer(modifier = Modifier.size(10.dp))
+            // 결과 영역
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.25f)
-                    .background(color = Color.Gray),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-
+                    .weight(0.2f)
+                    .background(Color.Gray)
+                    .clip(RoundedCornerShape(15.dp))
+                    .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                Text("result")
+                Text("result", color = Color.White, fontSize = 20.sp)
             }
+            Spacer(modifier = Modifier.weight(0.05f))
 
-            Spacer(modifier = Modifier.weight(0.05f)) // 비율 기반 여백
-
-            // 버튼 Row
+            // 버튼 Row (이미지 선택 및 이미지 주소 입력)
             Row(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
@@ -141,19 +161,15 @@ fun AIScreen() {
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp)
-                        .border(
-                            color = Color.Black,
-                            width = 2.dp,
-                            shape = RoundedCornerShape(15.dp)
-                        ),
+                        .shadow(4.dp, RoundedCornerShape(15.dp)),
                     onClick = {
                         pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 ) {
-                    Text("이미지 선택", fontSize = 15.sp, color = Color.Black)
+                    Text("이미지 선택", fontSize = 15.sp)
                 }
 
-                Spacer(modifier = Modifier.width(16.dp)) // 버튼 간 간격
+                Spacer(modifier = Modifier.width(16.dp))
 
                 // 이미지 주소 입력 버튼
                 Button(
@@ -165,22 +181,15 @@ fun AIScreen() {
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp)
-                        .border(
-                            color = Color.Black,
-                            width = 2.dp,
-                            shape = RoundedCornerShape(15.dp)
-                        ),
-                    onClick = {
-                        showTextField = true
-                    }
+                        .shadow(4.dp, RoundedCornerShape(15.dp)),
+                    onClick = { showTextField = true }
                 ) {
-                    Text("이미지 주소 입력", fontSize = 15.sp, color = Color.Black)
+                    Text("이미지 주소 입력", fontSize = 15.sp)
                 }
             }
+            Spacer(modifier = Modifier.weight(0.02f))
 
-            Spacer(modifier = Modifier.weight(0.03f)) // 비율 기반 여백
-
-            // 분석 버튼
+            // 이미지 분석 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -191,15 +200,14 @@ fun AIScreen() {
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(50.dp)
-                    .border(color = Color.Black, width = 2.dp, shape = RoundedCornerShape(15.dp)),
+                    .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
-                    // 분석 로직 추가 가능
+                    // 분석 로직
                 }
             ) {
-                Text("이미지 분석", fontSize = 20.sp, color = Color.Black)
+                Text("이미지 분석", fontSize = 18.sp)
             }
-
-            Spacer(modifier = Modifier.weight(0.03f)) // 비율 기반 여백
+            Spacer(modifier = Modifier.weight(0.02f))
 
             // 뒤로가기 버튼
             Button(
@@ -211,17 +219,15 @@ fun AIScreen() {
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(50.dp)
-                    .border(color = Color.Black, width = 2.dp, shape = RoundedCornerShape(15.dp)),
-                onClick = {
-                    context?.finish()
-                }
+                    .shadow(4.dp, RoundedCornerShape(15.dp)),
+                onClick = { context?.finish() }
             ) {
-                Text("뒤로가기", fontSize = 20.sp, color = Color.Black)
+                Text("뒤로가기", fontSize = 18.sp)
             }
-            Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 여백
+            Spacer(modifier = Modifier.weight(0.05f))
         }
 
-        // 팝업으로 텍스트 입력 필드
+        // 텍스트 입력 팝업
         if (showTextField) {
             Box(
                 modifier = Modifier
@@ -247,14 +253,12 @@ fun AIScreen() {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Button(onClick = {
-                            showTextField = false
-                        }) {
+                        Button(onClick = { showTextField = false }) {
                             Text("Cancel")
                         }
                         Button(onClick = {
                             imageUrl = textFieldValue
-                            imageURI = null // Clear image URI when a URL is entered
+                            imageURI = null
                             showTextField = false
                         }) {
                             Text("Submit")

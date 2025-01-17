@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,9 +31,13 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,72 +59,116 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val context = LocalContext.current
 
-    Column(
+    // 배경 색상 (그라데이션)
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp), // 여백 추가
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF404040), Color(0xFFBFBFBF))
+                )
+            )
     ) {
-        Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 여백
-        Text("AI Killer", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.weight(0.05f)) // 비율 기반 여백
-
-        // 이미지 컨테이너
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.6f) // 비율 기반 크기
-                .background(color = Color.Gray),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("image", fontSize = 20.sp, color = Color.White)
-        }
-
-        Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 여백
-
-        // 첫 번째 버튼
-        Button(
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White, // 배경색
-                contentColor = Color.Black   // 텍스트 색상
-            ),
-            modifier = Modifier
-                .fillMaxWidth(0.9f) // 화면 너비에 비례
-                .height(50.dp)
-                .border(color = Color.Black, width = 2.dp, shape = RoundedCornerShape(15.dp)),
-            onClick = {
-                val intent1 = Intent(context, AIActivity::class.java)
-                context.startActivity(intent1)
+            // 상단 영역
+            Box(
+                modifier = Modifier
+                    .weight(0.2f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                // 타이틀 텍스트
+                Text(
+                    "AI Killer",
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.shadow(8.dp)
+                )
             }
-        ) {
-            Text("AI 이미지 화면", fontSize = 20.sp, color = Color.Black)
-        }
 
-        Spacer(modifier = Modifier.weight(0.05f)) // 비율 기반 여백
-
-        // 두 번째 버튼
-        Button(
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White, // 배경색
-                contentColor = Color.Black   // 텍스트 색상
-            ),
-            modifier = Modifier
-                .fillMaxWidth(0.9f) // 화면 너비에 비례
-                .height(50.dp)
-                .border(color = Color.Black, width = 2.dp, shape = RoundedCornerShape(15.dp)),
-            onClick = {
-                val intent2 = Intent(context, DeepfakeActivity::class.java)
-                context.startActivity(intent2)
+            // 이미지 컨테이너
+            Box(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(Color.Transparent) // 배경색 투명 설정
+                    .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Image Placeholder", fontSize = 20.sp, color = Color.White)
             }
-        ) {
-            Text("Deepfake 이미지 화면", fontSize = 20.sp, color = Color.Black)
-        }
 
-        Spacer(modifier = Modifier.weight(0.1f)) // 비율 기반 여백
+            // 버튼 영역
+            Column(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // 첫 번째 버튼
+                Button(
+                    shape = RoundedCornerShape(15.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00796B),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(50.dp)
+                        .shadow(4.dp, RoundedCornerShape(15.dp)),
+                    onClick = {
+                        val intent1 = Intent(context, AIActivity::class.java)
+                        context.startActivity(intent1)
+                    }
+                ) {
+                    Text("AI 이미지 화면", fontSize = 18.sp)
+                }
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // 두 번째 버튼
+                Button(
+                    shape = RoundedCornerShape(15.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD32F2F),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(50.dp)
+                        .shadow(4.dp, RoundedCornerShape(15.dp)),
+                    onClick = {
+                        val intent2 = Intent(context, DeepfakeActivity::class.java)
+                        context.startActivity(intent2)
+                    }
+                ) {
+                    Text("Deepfake 이미지 화면", fontSize = 18.sp)
+                }
+            }
+
+            // 하단 크레딧
+            Box(
+                modifier = Modifier
+                    .weight(0.1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "© close AI",
+                    fontSize = 12.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+        }
     }
 }
 
