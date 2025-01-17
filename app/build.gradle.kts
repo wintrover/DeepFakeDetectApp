@@ -5,6 +5,14 @@ plugins {
 }
 
 android {
+    sourceSets {
+        getByName("main") {
+            assets.srcDirs("src/main/assets") // assets 디렉토리 명시적으로 포함
+        }
+    }
+    aaptOptions {
+        noCompress ("ptl") // .ptl 파일 압축 방지
+    }
     namespace = "com.garam.cvproject"
     compileSdk = 35
 
@@ -20,13 +28,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -59,4 +68,7 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
     implementation ("androidx.compose.material:material-icons-extended:1.7.6")
+
+    implementation ("org.pytorch:pytorch_android:2.1.0") // PyTorch
+//    implementation ("org.pytorch:pytorch_android_torchvision:2.1.0") // (옵션) torchvision 사용 시
 }

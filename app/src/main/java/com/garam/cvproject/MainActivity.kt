@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -99,11 +101,17 @@ fun MainScreen() {
                     .weight(0.4f)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(15.dp))
-                    .background(Color.Transparent) // 배경색 투명 설정
-                    .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
+                    .background(Color.Transparent), // 배경색 투명 설정
+//                    .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Image Placeholder", fontSize = 20.sp, color = Color.White)
+                Image(
+                    painter = painterResource(R.drawable.aikiller),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+//                        .clip(RoundedCornerShape(40.dp))
+                )
+//                Text("Image Placeholder", fontSize = 20.sp, color = Color.White)
             }
 
             // 버튼 영역

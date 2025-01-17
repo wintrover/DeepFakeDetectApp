@@ -95,7 +95,7 @@ fun DeepfakeScreen() {
             // 상단 타이틀
             Spacer(modifier = Modifier.weight(0.1f))
             Text(
-                "AI Screen",
+                "Deepfake Screen",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

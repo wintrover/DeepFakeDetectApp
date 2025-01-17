@@ -1,7 +1,7 @@
 package com.garam.cvproject
 
 import android.app.Activity
-import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
+import com.garam.cvproject.AI.EfficientnetAI
+import com.garam.cvproject.AI.ImagePreprocessor
 import com.garam.cvproject.ui.theme.CVProjectTheme
 
 class AIActivity : ComponentActivity() {
@@ -62,10 +64,13 @@ class AIActivity : ComponentActivity() {
 @Composable
 fun AIScreen() {
     val context = LocalContext.current as? Activity
+    val efficientNetAI = remember { EfficientnetAI(context!!) } // EfficientNet 모델 초기화
+
     var imageURI by remember { mutableStateOf<Uri?>(null) }
     var imageUrl by remember { mutableStateOf("") }
     var textFieldValue by remember { mutableStateOf("") }
     var showTextField by remember { mutableStateOf(false) }
+    var resultText by remember { mutableStateOf("결과: 없음") } // 결과값 표시를 위한 상태
 
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -126,10 +131,11 @@ fun AIScreen() {
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Text("image", fontSize = 20.sp, color = Color.White)
+                    Text("이미지 없음", fontSize = 20.sp, color = Color.White)
                 }
             }
             Spacer(modifier = Modifier.size(10.dp))
+
             // 결과 영역
             Box(
                 modifier = Modifier
@@ -140,7 +146,7 @@ fun AIScreen() {
                     .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("result", color = Color.White, fontSize = 20.sp)
+                Text(resultText, color = Color.White, fontSize = 20.sp)
             }
             Spacer(modifier = Modifier.weight(0.05f))
 
@@ -203,6 +209,32 @@ fun AIScreen() {
                     .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
                     // 분석 로직
+                    val bitmap = if (imageURI != null) {
+                        val inputStream = context?.contentResolver?.openInputStream(imageURI!!)
+                        BitmapFactory.decodeStream(inputStream)
+                    } else if (imageUrl.isNotBlank()) {
+                        try {
+                            val inputStream = java.net.URL(imageUrl).openStream()
+                            BitmapFactory.decodeStream(inputStream)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+
+                    bitmap?.let {
+                        try {
+                            val inputData = ImagePreprocessor.preprocessImage(it) // 전처리
+                            val outputData = efficientNetAI.predict(inputData) // 모델 예측
+                            val maxIndex = outputData.indices.maxByOrNull { idx -> outputData[idx] } ?: -1
+                            resultText = "예측 결과: 클래스 $maxIndex"
+                        } catch (e: Exception) {
+                            resultText = "예측 중 오류 발생: ${e.message}"
+                        }
+                    } ?: run {
+                        resultText = "이미지를 처리할 수 없습니다."
+                    }
                 }
             ) {
                 Text("이미지 분석", fontSize = 18.sp)
