@@ -5,7 +5,6 @@ package com.garam.cvproject
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
-import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -19,7 +18,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -63,12 +61,15 @@ import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import com.garam.cvproject.ui.theme.CVProjectTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.FloatBuffer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             CVProjectTheme {
                 MainScreen()
@@ -79,7 +80,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    val context = LocalContext.current as? Activity
+    val context = LocalContext.current
     var imageURI by remember { mutableStateOf<Uri?>(null) }
     var imageUrl by remember { mutableStateOf("") }
     var textFieldValue by remember { mutableStateOf("") }
@@ -88,7 +89,7 @@ fun MainScreen() {
 
     val env = OrtEnvironment.getEnvironment()
     val session: OrtSession =
-        env.createSession(context!!.assets.open("deepfake_binary_s128_e5_early.onnx").readBytes())
+        env.createSession(context.assets.open("deepfake_binary_s128_e5_early.onnx").readBytes())
 
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -105,7 +106,7 @@ fun MainScreen() {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF404040), Color(0xFFBFBFBF))
+                    colors = listOf(Color(0xFF427CFA), Color.White)
                 )
             )
     ) {
@@ -123,10 +124,9 @@ fun MainScreen() {
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.shadow(8.dp)
+//                modifier = Modifier.shadow(8.dp)
             )
             Spacer(modifier = Modifier.weight(0.05f))
-
             // 이미지 컨테이너
             Box(
                 modifier = Modifier
@@ -159,7 +159,6 @@ fun MainScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.2f)
-                    .background(Color.Gray)
                     .clip(RoundedCornerShape(15.dp))
                     .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
@@ -215,9 +214,7 @@ fun MainScreen() {
                 ) {
                     Text("이미지 선택", fontSize = 15.sp)
                 }
-
                 Spacer(modifier = Modifier.width(16.dp))
-
                 // 이미지 주소 입력 버튼
                 Button(
                     shape = RoundedCornerShape(15.dp),
@@ -235,7 +232,6 @@ fun MainScreen() {
                 }
             }
             Spacer(modifier = Modifier.weight(0.02f))
-
             // 이미지 분석 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
@@ -249,52 +245,46 @@ fun MainScreen() {
                     .height(50.dp)
                     .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
-                    // 분석 로직
-
-                    // 분석 로직
-                    val bitmap = if (imageURI != null) {
-                        val inputStream = context?.contentResolver?.openInputStream(imageURI!!)
-                        BitmapFactory.decodeStream(inputStream)
-                    } else if (imageUrl.isNotBlank()) {
-                        try {
-                            val inputStream = java.net.URL(imageUrl).openStream()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val bitmap = if (imageURI != null) {
+                            val inputStream = context.contentResolver?.openInputStream(imageURI!!)
                             BitmapFactory.decodeStream(inputStream)
-                        } catch (e: Exception) {
+                        } else if (imageUrl.isNotBlank()) {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    val inputStream = java.net.URL(imageUrl).openStream()
+                                    BitmapFactory.decodeStream(inputStream)
+                                }
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else {
                             null
                         }
-                    } else {
-                        null
-                    }
+                        bitmap?.let {
+                            try {
+                                // 이미지 전처리
+                                val inputTensor = preprocessImageForOnnx(it, env)
 
-                    bitmap?.let {
-                        try {
-                            // 이미지 전처리
-                            val inputTensor = preprocessImageForOnnx(it, env)
-
-                            // ONNX 모델 추론
-                            val output = session.run(mapOf("input" to inputTensor))
-                            val resultArray = (output[0].value as Array<FloatArray>)[0]
-                            val maxIndex =
-                                resultArray.indices.maxByOrNull { idx -> resultArray[idx] }
-                                    ?: -1
-                            if (maxIndex == 0) {
-                                resultText = "fake"
-                            } else if (maxIndex == 1) {
-                                resultText = "real"
+                                // ONNX 모델 추론
+                                val output = session.run(mapOf("input" to inputTensor))
+                                val resultArray = (output[0].value as Array<FloatArray>)[0]
+                                val maxIndex =
+                                    resultArray.indices.maxByOrNull { idx -> resultArray[idx] }
+                                        ?: -1
+                                resultText = if (maxIndex == 0) "fake" else "real"
+                            } catch (e: Exception) {
+                                resultText = "예측 중 오류 발생: ${e.message}"
                             }
-                        } catch (e: Exception) {
-                            resultText = "예측 중 오류 발생: ${e.message}"
+                        } ?: run {
+                            resultText = "이미지를 처리할 수 없습니다."
                         }
-                    } ?: run {
-                        resultText = "이미지를 처리할 수 없습니다."
                     }
-
                 }
             ) {
                 Text("이미지 분석", fontSize = 18.sp)
             }
             Spacer(modifier = Modifier.weight(0.02f))
-
             // 인증마크 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
@@ -308,20 +298,25 @@ fun MainScreen() {
                     .shadow(4.dp, RoundedCornerShape(15.dp)),
                 enabled = resultText == "real", // "real"일 때만 활성화
                 onClick = {
-                    val bitmap = if (imageURI != null) {
-                        val inputStream = context?.contentResolver?.openInputStream(imageURI!!)
-                        BitmapFactory.decodeStream(inputStream)
-                    } else null
-
-                    bitmap?.let {
-                        val markedImageUri = addCertificationMark(it, context)
-                        if (markedImageUri != null) {
-                            Toast.makeText(context, "이미지가 갤러리에 저장되었습니다!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val source = when {
+                            imageURI != null -> context?.contentResolver?.openInputStream(imageURI!!)?.let {
+                                BitmapFactory.decodeStream(it)
+                            }
+                            imageUrl.isNotBlank() -> imageUrl
+                            else -> null
                         }
-                    } ?: run {
-                        Toast.makeText(context, "이미지를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+
+                        if (source != null) {
+                            val markedImageUri = addCertificationMarkFromSourceAsync(source, context!!)
+                            if (markedImageUri != null) {
+                                Toast.makeText(context, "이미지가 갤러리에 저장되었습니다!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "이미지를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             ) {
@@ -329,7 +324,6 @@ fun MainScreen() {
             }
             Spacer(modifier = Modifier.weight(0.1f))
         }
-
         // 텍스트 입력 팝업
         if (showTextField) {
             Box(
@@ -402,29 +396,54 @@ private fun preprocessImageForOnnx(bitmap: Bitmap, env: OrtEnvironment): OnnxTen
     return OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, 128, 128))
 }
 
-fun addCertificationMark(bitmap: Bitmap, context: Context): Uri? {
+suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): Uri? {
+    // Bitmap 초기화
+    val bitmap = withContext(Dispatchers.IO) {
+        when (source) {
+            is Bitmap -> source
+            is String -> { // URL 처리
+                try {
+                    val inputStream = java.net.URL(source).openStream()
+                    BitmapFactory.decodeStream(inputStream)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
+            else -> null
+        }
+    } ?: return null // 비트맵 생성 실패 시 null 반환
+
     // 인증마크를 그릴 비트맵 생성
     val overlayBitmap = bitmap.config?.let { Bitmap.createBitmap(bitmap.width, bitmap.height, it) }
-    val canvas = overlayBitmap?.let { Canvas(it) }
-    canvas?.drawBitmap(bitmap, 0f, 0f, null)
+        ?: return null // 비트맵 생성 실패 시 null 반환
+    val canvas = Canvas(overlayBitmap)
+    canvas.drawBitmap(bitmap, 0f, 0f, null)
 
     // 인증마크 Drawable 로드
     val markDrawable = ContextCompat.getDrawable(context, R.drawable.mark)
+    if (markDrawable == null) {
+        // 인증마크가 없는 경우 로그 출력 또는 기본 동작 수행
+        return null
+    }
+
+    val density = context.resources.displayMetrics.density
+    val marginPx = (2 * density).toInt() // 여백을 dp에서 픽셀로 변환
     val markSize = (bitmap.width * 0.2).toInt() // 인증마크 크기 (이미지의 20%)
-    val margin = 8 // 여백을 8dp로 조정
-    val left = bitmap.width - markSize - margin // 우측 하단에 위치
-    val top = bitmap.height - markSize - margin
+    val left = bitmap.width - markSize - marginPx // 우측 하단에 위치
+    val top = bitmap.height - markSize - marginPx
 
     // 인증마크 위치와 크기 설정
-    markDrawable?.setBounds(left, top, left + markSize, top + markSize)
-    markDrawable?.alpha = 128 // 50% 투명도
-    if (canvas != null) {
-        markDrawable?.draw(canvas)
-    }
+    markDrawable.setBounds(left, top, left + markSize, top + markSize)
+    markDrawable.alpha = 128 // 50% 투명도
+    markDrawable.draw(canvas)
 
     // 갤러리에 저장
     val contentValues = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, "certified_image_${System.currentTimeMillis()}.png")
+        put(
+            MediaStore.Images.Media.DISPLAY_NAME,
+            "certified_image_${System.currentTimeMillis()}.png"
+        )
         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/AiGO")
     }
@@ -432,16 +451,14 @@ fun addCertificationMark(bitmap: Bitmap, context: Context): Uri? {
     val resolver = context.contentResolver
     val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-    if (overlayBitmap != null) {
-        uri?.let {
-            resolver.openOutputStream(it)?.use { outputStream ->
-                overlayBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            }
+    uri?.let {
+        resolver.openOutputStream(it)?.use { outputStream ->
+            overlayBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
         }
     }
+
     return uri
 }
-
 
 @Preview(showBackground = true)
 @Composable
