@@ -99,7 +99,6 @@ fun MainScreen() {
                 resultText = "분석 필요"
             }
         }
-
     // 배경 색상
     Box(
         modifier = Modifier
@@ -118,7 +117,7 @@ fun MainScreen() {
             verticalArrangement = Arrangement.Top
         ) {
             // 상단 타이틀
-            Spacer(modifier = Modifier.weight(0.1f))
+            Spacer(modifier = Modifier.weight(0.07f))
             Text(
                 "AiGO",
                 fontSize = 40.sp,
@@ -126,7 +125,7 @@ fun MainScreen() {
                 color = Color.White,
 //                modifier = Modifier.shadow(8.dp)
             )
-            Spacer(modifier = Modifier.weight(0.05f))
+            Spacer(modifier = Modifier.weight(0.08f))
             // 이미지 컨테이너
             Box(
                 modifier = Modifier
@@ -153,12 +152,12 @@ fun MainScreen() {
                     Text("image", fontSize = 20.sp, color = Color.White)
                 }
             }
-            Spacer(modifier = Modifier.size(10.dp))
+            Spacer(modifier = Modifier.size(15.dp))
             // 결과 영역
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.2f)
+                    .weight(0.3f)
                     .clip(RoundedCornerShape(15.dp))
                     .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
@@ -186,10 +185,8 @@ fun MainScreen() {
                         Text(resultText, color = Color.White, fontSize = 20.sp)
                     }
                 }
-//                Text("result", color = Color.White, fontSize = 20.sp)
             }
-            Spacer(modifier = Modifier.weight(0.03f))
-
+            Spacer(modifier = Modifier.weight(0.05f))
             // 버튼 Row (이미지 선택 및 이미지 주소 입력)
             Row(
                 modifier = Modifier
@@ -212,7 +209,7 @@ fun MainScreen() {
                         pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 ) {
-                    Text("이미지 선택", fontSize = 15.sp)
+                    Text("이미지 선택", fontSize = 13.sp)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 // 이미지 주소 입력 버튼
@@ -228,10 +225,10 @@ fun MainScreen() {
                         .shadow(4.dp, RoundedCornerShape(15.dp)),
                     onClick = { showTextField = true }
                 ) {
-                    Text("이미지 주소 입력", fontSize = 15.sp)
+                    Text("이미지 주소 입력", fontSize = 13.sp)
                 }
             }
-            Spacer(modifier = Modifier.weight(0.02f))
+            Spacer(modifier = Modifier.weight(0.04f))
             // 이미지 분석 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
@@ -242,8 +239,8 @@ fun MainScreen() {
                 enabled = imageURI != null || imageUrl.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(50.dp)
-                    .shadow(4.dp, RoundedCornerShape(15.dp)),
+                    .height(50.dp),
+//                    .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
                         val bitmap = if (imageURI != null) {
@@ -284,7 +281,7 @@ fun MainScreen() {
             ) {
                 Text("이미지 분석", fontSize = 18.sp)
             }
-            Spacer(modifier = Modifier.weight(0.02f))
+            Spacer(modifier = Modifier.weight(0.04f))
             // 인증마크 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
@@ -294,25 +291,29 @@ fun MainScreen() {
                 ),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(50.dp)
-                    .shadow(4.dp, RoundedCornerShape(15.dp)),
+                    .height(50.dp),
+//                    .shadow(4.dp, RoundedCornerShape(15.dp)),
                 enabled = resultText == "real", // "real"일 때만 활성화
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
                         val source = when {
-                            imageURI != null -> context?.contentResolver?.openInputStream(imageURI!!)?.let {
-                                BitmapFactory.decodeStream(it)
-                            }
+                            imageURI != null -> context?.contentResolver?.openInputStream(imageURI!!)
+                                ?.let {
+                                    BitmapFactory.decodeStream(it)
+                                }
+
                             imageUrl.isNotBlank() -> imageUrl
                             else -> null
                         }
-
                         if (source != null) {
-                            val markedImageUri = addCertificationMarkFromSourceAsync(source, context!!)
+                            val markedImageUri =
+                                addCertificationMarkFromSourceAsync(source, context!!)
                             if (markedImageUri != null) {
-                                Toast.makeText(context, "이미지가 갤러리에 저장되었습니다!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "이미지가 갤러리에 저장되었습니다!", Toast.LENGTH_SHORT)
+                                    .show()
                             } else {
-                                Toast.makeText(context, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT)
+                                    .show()
                             }
                         } else {
                             Toast.makeText(context, "이미지를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
@@ -410,6 +411,7 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
                     null
                 }
             }
+
             else -> null
         }
     } ?: return null // 비트맵 생성 실패 시 null 반환
@@ -456,7 +458,6 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
             overlayBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
         }
     }
-
     return uri
 }
 
