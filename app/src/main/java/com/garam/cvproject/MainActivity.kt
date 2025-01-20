@@ -422,7 +422,7 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
     canvas.drawBitmap(bitmap, 0f, 0f, null)
 
     // 인증마크 Drawable 로드
-    val markDrawable = ContextCompat.getDrawable(context, R.drawable.mark)
+    val markDrawable = ContextCompat.getDrawable(context, R.drawable.certificationmark)
     if (markDrawable == null) {
         // 인증마크가 없는 경우 로그 출력 또는 기본 동작 수행
         return null

@@ -7,9 +7,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/mark"
+        android:icon="@drawable/certificationmark"
         android:label="AiGO"
-        android:roundIcon="@drawable/mark"
+        android:roundIcon="@drawable/certificationmark"
         android:supportsRtl="true"
         android:theme="@style/Theme.CVProject"
         tools:targetApi="31">
