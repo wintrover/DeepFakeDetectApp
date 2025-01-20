@@ -180,8 +180,7 @@ fun MainScreen() {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight()
-                            .background(color = Color.Green),
+                            .fillMaxHeight(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -418,6 +417,7 @@ fun addCertificationMark(bitmap: Bitmap, context: Context): Uri? {
 
     // 인증마크 위치와 크기 설정
     markDrawable?.setBounds(left, top, left + markSize, top + markSize)
+    markDrawable?.alpha = 128 // 50% 투명도
     if (canvas != null) {
         markDrawable?.draw(canvas)
     }
