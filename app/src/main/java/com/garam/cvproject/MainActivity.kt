@@ -6,10 +6,16 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.app.Activity
+import android.content.ContentValues
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -53,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import com.garam.cvproject.ui.theme.CVProjectTheme
@@ -289,7 +296,7 @@ fun MainScreen() {
             }
             Spacer(modifier = Modifier.weight(0.02f))
 
-            // 뒤로가기 버튼
+            // 인증마크 버튼
             Button(
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -300,9 +307,23 @@ fun MainScreen() {
                     .fillMaxWidth(0.9f)
                     .height(50.dp)
                     .shadow(4.dp, RoundedCornerShape(15.dp)),
-                enabled = resultText == "real",
+                enabled = resultText == "real", // "real"일 때만 활성화
                 onClick = {
+                    val bitmap = if (imageURI != null) {
+                        val inputStream = context?.contentResolver?.openInputStream(imageURI!!)
+                        BitmapFactory.decodeStream(inputStream)
+                    } else null
 
+                    bitmap?.let {
+                        val markedImageUri = addCertificationMark(it, context)
+                        if (markedImageUri != null) {
+                            Toast.makeText(context, "이미지가 갤러리에 저장되었습니다!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    } ?: run {
+                        Toast.makeText(context, "이미지를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             ) {
                 Text("인증마크", fontSize = 18.sp)
@@ -381,6 +402,46 @@ private fun preprocessImageForOnnx(bitmap: Bitmap, env: OrtEnvironment): OnnxTen
     floatBuffer.rewind()
     return OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, 128, 128))
 }
+
+fun addCertificationMark(bitmap: Bitmap, context: Context): Uri? {
+    // 인증마크를 그릴 비트맵 생성
+    val overlayBitmap = bitmap.config?.let { Bitmap.createBitmap(bitmap.width, bitmap.height, it) }
+    val canvas = overlayBitmap?.let { Canvas(it) }
+    canvas?.drawBitmap(bitmap, 0f, 0f, null)
+
+    // 인증마크 Drawable 로드
+    val markDrawable = ContextCompat.getDrawable(context, R.drawable.mark)
+    val markSize = (bitmap.width * 0.2).toInt() // 인증마크 크기 (이미지의 20%)
+    val margin = 8 // 여백을 8dp로 조정
+    val left = bitmap.width - markSize - margin // 우측 하단에 위치
+    val top = bitmap.height - markSize - margin
+
+    // 인증마크 위치와 크기 설정
+    markDrawable?.setBounds(left, top, left + markSize, top + markSize)
+    if (canvas != null) {
+        markDrawable?.draw(canvas)
+    }
+
+    // 갤러리에 저장
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, "certified_image_${System.currentTimeMillis()}.png")
+        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/AiGO")
+    }
+
+    val resolver = context.contentResolver
+    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+    if (overlayBitmap != null) {
+        uri?.let {
+            resolver.openOutputStream(it)?.use { outputStream ->
+                overlayBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            }
+        }
+    }
+    return uri
+}
+
 
 @Preview(showBackground = true)
 @Composable
