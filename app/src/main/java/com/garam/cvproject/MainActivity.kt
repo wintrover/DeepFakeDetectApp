@@ -23,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +37,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -54,8 +58,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
@@ -108,6 +114,34 @@ fun MainScreen() {
                 )
             )
     ) {
+        var showTooltip by remember { mutableStateOf(false) }
+        if (showTooltip) {
+            Popup(
+                alignment = Alignment.TopEnd,
+                offset = IntOffset(-60, 225) // 아이콘 아래로 약간의 여백
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color.DarkGray, shape = RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "이미지 업로드 시 이미지 분석 버튼 활성화\n이미지가 real일 때 인증마크 버튼 활성화",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Help,
+            contentDescription = null,
+            modifier = Modifier
+                .padding(end = 20.dp, top = 41.dp)
+                .align(Alignment.TopEnd)
+                .size(30.dp)
+                .clickable { showTooltip = !showTooltip }
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
