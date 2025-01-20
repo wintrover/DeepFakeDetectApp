@@ -1,6 +1,11 @@
 package com.garam.cvproject
 
+import ai.onnxruntime.OnnxTensor
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
 import android.app.Activity
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -47,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
 import com.garam.cvproject.ui.theme.CVProjectTheme
+import java.nio.FloatBuffer
 
 class DeepfakeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +72,11 @@ fun DeepfakeScreen() {
     var imageUrl by remember { mutableStateOf("") }
     var textFieldValue by remember { mutableStateOf("") }
     var showTextField by remember { mutableStateOf(false) }
+    var resultText by remember { mutableStateOf("결과: 없음") } // 결과값 표시를 위한 상태
+
+    val env = OrtEnvironment.getEnvironment()
+    val session: OrtSession =
+        env.createSession(context!!.assets.open("deepfake_binary_s128_e5_early.onnx").readBytes())
 
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -141,24 +152,27 @@ fun DeepfakeScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 Row(
-                    modifier = Modifier.padding(10.dp)
-                    .fillMaxSize()
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxSize()
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(0.4f)
+                        modifier = Modifier
+                            .fillMaxWidth(0.4f)
                             .fillMaxHeight()
                             .background(color = Color.Yellow)
                     ) {
-                        Text("크롭 이미지")
+                        Text("크롭된 이미지")
                     }
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .fillMaxHeight()
                             .background(color = Color.Green),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text("결과 설명")
+                        Text(resultText, color = Color.White, fontSize = 20.sp)
                     }
                 }
 //                Text("result", color = Color.White, fontSize = 20.sp)
@@ -224,6 +238,41 @@ fun DeepfakeScreen() {
                     .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
                     // 분석 로직
+
+                    // 분석 로직
+                    val bitmap = if (imageURI != null) {
+                        val inputStream = context?.contentResolver?.openInputStream(imageURI!!)
+                        BitmapFactory.decodeStream(inputStream)
+                    } else if (imageUrl.isNotBlank()) {
+                        try {
+                            val inputStream = java.net.URL(imageUrl).openStream()
+                            BitmapFactory.decodeStream(inputStream)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+
+                    bitmap?.let {
+                        try {
+                            // 이미지 전처리
+                            val inputTensor = preprocessImageForOnnx(it, env)
+
+                            // ONNX 모델 추론
+                            val output = session.run(mapOf("input" to inputTensor))
+                            val resultArray = (output[0].value as Array<FloatArray>)[0]
+                            val maxIndex =
+                                resultArray.indices.maxByOrNull { idx -> resultArray[idx] }
+                                    ?: -1
+                            resultText = "예측 결과: 클래스 $maxIndex"
+                        } catch (e: Exception) {
+                            resultText = "예측 중 오류 발생: ${e.message}"
+                        }
+                    } ?: run {
+                        resultText = "이미지를 처리할 수 없습니다."
+                    }
+
                 }
             ) {
                 Text("이미지 분석", fontSize = 18.sp)
@@ -290,6 +339,36 @@ fun DeepfakeScreen() {
         }
     }
 }
+
+/**
+ * ONNX 전용 이미지 전처리 함수 (예: 128x128 크기 변환, RGB 정규화)
+ */
+private fun preprocessImageForOnnx(bitmap: Bitmap, env: OrtEnvironment): OnnxTensor {
+    val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 128, 128, true)
+    val floatBuffer = FloatBuffer.allocate(1 * 3 * 128 * 128)
+
+    val mean = floatArrayOf(0.485f, 0.456f, 0.406f)
+    val std = floatArrayOf(0.229f, 0.224f, 0.225f)
+
+    val pixels = IntArray(128 * 128)
+    resizedBitmap.getPixels(pixels, 0, 128, 0, 0, 128, 128)
+
+    for (y in 0 until 128) {
+        for (x in 0 until 128) {
+            val pixel = pixels[y * 128 + x]
+            val r = ((pixel shr 16 and 0xFF) / 255.0f - mean[0]) / std[0]
+            val g = ((pixel shr 8 and 0xFF) / 255.0f - mean[1]) / std[1]
+            val b = ((pixel and 0xFF) / 255.0f - mean[2]) / std[2]
+            floatBuffer.put(b)
+            floatBuffer.put(g)
+            floatBuffer.put(r)
+        }
+    }
+
+    floatBuffer.rewind()
+    return OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, 128, 128))
+}
+
 
 @Preview(showBackground = true)
 @Composable

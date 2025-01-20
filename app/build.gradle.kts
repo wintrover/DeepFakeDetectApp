@@ -70,5 +70,7 @@ dependencies {
     implementation ("androidx.compose.material:material-icons-extended:1.7.6")
 
     implementation ("org.pytorch:pytorch_android:2.1.0") // PyTorch
+    implementation ("com.microsoft.onnxruntime:onnxruntime-android:1.15.0")
+
 //    implementation ("org.pytorch:pytorch_android_torchvision:2.1.0") // (옵션) torchvision 사용 시
 }
