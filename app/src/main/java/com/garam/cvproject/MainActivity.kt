@@ -73,18 +73,31 @@ import kotlinx.coroutines.withContext
 import java.nio.FloatBuffer
 
 class MainActivity : ComponentActivity() {
+    private lateinit var detector: DeepfakeDetector
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val env = OrtEnvironment.getEnvironment()
+
+        // YOLO onnx
+        val yoloBytes = assets.open("yolov11n-face.onnx").readBytes()
+        val yoloSession = env.createSession(yoloBytes)
+
+        // 이진 분류 onnx
+        val clsBytes = assets.open("deepfake_binary_s128_e5_early.onnx").readBytes()
+        val clsSession = env.createSession(clsBytes)
+
+        // Detector 생성
+        detector = DeepfakeDetector(yoloSession, clsSession)
         setContent {
             CVProjectTheme {
-                MainScreen()
+                MainScreen(detector)
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(detector: DeepfakeDetector) {
     val context = LocalContext.current
     var imageURI by remember { mutableStateOf<Uri?>(null) }
     var imageUrl by remember { mutableStateOf("") }
@@ -276,38 +289,28 @@ fun MainScreen() {
 //                    .shadow(4.dp, RoundedCornerShape(15.dp)),
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
-                        val bitmap = if (imageURI != null) {
-                            val inputStream = context.contentResolver?.openInputStream(imageURI!!)
-                            BitmapFactory.decodeStream(inputStream)
-                        } else if (imageUrl.isNotBlank()) {
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    val inputStream = java.net.URL(imageUrl).openStream()
-                                    BitmapFactory.decodeStream(inputStream)
+                        // 1) Bitmap 로딩
+                        val bitmap = withContext(Dispatchers.IO) {
+                            loadBitmap(imageURI, imageUrl, context)
+                        }
+
+                        if (bitmap != null) {
+                            // 2) DeepfakeDetector로 얼굴검출+분류
+                            val results = detector.detectAndClassify(bitmap)
+
+                            // 3) 여러 결과를 합쳐서 resultText 구성
+                            //    예: Face #0: Real (95.00%) ...
+                            if (results.isEmpty()) {
+                                resultText = "결과 없음"
+                            } else {
+                                val sb = StringBuilder()
+                                for (res in results) {
+                                    sb.appendLine(res.message)
                                 }
-                            } catch (e: Exception) {
-                                null
+                                resultText = sb.toString()
                             }
                         } else {
-                            null
-                        }
-                        bitmap?.let {
-                            try {
-                                // 이미지 전처리
-                                val inputTensor = preprocessImageForOnnx(it, env)
-
-                                // ONNX 모델 추론
-                                val output = session.run(mapOf("input" to inputTensor))
-                                val resultArray = (output[0].value as Array<FloatArray>)[0]
-                                val maxIndex =
-                                    resultArray.indices.maxByOrNull { idx -> resultArray[idx] }
-                                        ?: -1
-                                resultText = if (maxIndex == 0) "fake" else "real"
-                            } catch (e: Exception) {
-                                resultText = "예측 중 오류 발생: ${e.message}"
-                            }
-                        } ?: run {
-                            resultText = "이미지를 처리할 수 없습니다."
+                            resultText = "이미지 로딩 실패"
                         }
                     }
                 }
@@ -399,6 +402,29 @@ fun MainScreen() {
                 }
             }
         }
+    }
+}
+
+suspend fun loadBitmap(
+    uri: Uri?,
+    imageUrl: String,
+    context: Context
+): Bitmap? = withContext(Dispatchers.IO) {
+    return@withContext when {
+        uri != null -> {
+            context.contentResolver?.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        }
+
+        imageUrl.isNotBlank() -> {
+            try {
+                val inputStream = java.net.URL(imageUrl).openStream()
+                BitmapFactory.decodeStream(inputStream)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        else -> null
     }
 }
 
