@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -98,6 +100,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(detector: DeepfakeDetector) {
+    var croppedFaceBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
     var imageURI by remember { mutableStateOf<Uri?>(null) }
     var imageUrl by remember { mutableStateOf("") }
@@ -219,7 +222,16 @@ fun MainScreen(detector: DeepfakeDetector) {
                             .fillMaxHeight()
                             .background(color = Color.Yellow)
                     ) {
-                        Text("크롭된 이미지")
+
+                        croppedFaceBitmap?.let { bmp ->
+                            Image(
+                                bitmap = bmp.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f) // 적절히 비율 조정
+                            )
+                        }
                     }
                     Column(
                         modifier = Modifier
@@ -296,25 +308,23 @@ fun MainScreen(detector: DeepfakeDetector) {
 
                         if (bitmap != null) {
                             // 2) DeepfakeDetector로 얼굴검출+분류
-                            val results = detector.detectAndClassify(bitmap)
+                            val bestResult = detector.detectAndClassify(bitmap)
 
-                            // 3) 여러 결과를 합쳐서 resultText 구성
-                            //    예: Face #0: Real (95.00%) ...
-                            if (results.isEmpty()) {
-                                resultText = "결과 없음"
+                            // 3) 결과 처리
+                            if (bestResult != null) {
+                                resultText = bestResult.message
+                                // 크롭된 얼굴 이미지를 State에 저장
+                                croppedFaceBitmap = bestResult.croppedBitmap
                             } else {
-                                val sb = StringBuilder()
-                                for (res in results) {
-                                    sb.appendLine(res.message)
-                                }
-                                resultText = sb.toString()
+                                resultText = "결과 없음"
+                                croppedFaceBitmap = null
                             }
                         } else {
                             resultText = "이미지 로딩 실패"
+                            croppedFaceBitmap = null
                         }
                     }
-                }
-            ) {
+                }            ) {
                 Text("이미지 분석", fontSize = 18.sp)
             }
             Spacer(modifier = Modifier.weight(0.04f))
