@@ -7,9 +7,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/bluecertification"
+        android:icon="@mipmap/logo2"
         android:label="BLUE CHECK"
-        android:roundIcon="@drawable/bluecertification"
+        android:roundIcon="@mipmap/logo2"
         android:supportsRtl="true"
         android:theme="@style/Theme.CVProject"
         tools:targetApi="31">

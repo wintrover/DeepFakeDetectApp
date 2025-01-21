@@ -3,6 +3,7 @@
 package com.garam.cvproject
 
 import ai.onnxruntime.OrtEnvironment
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -22,7 +23,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,16 +32,21 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -57,12 +62,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
@@ -102,10 +107,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// todo 도움말 다이얼로그 관리 이넘 클래스
+enum class DialogState { NONE, HELP1, HELP2, HELP3 }
+
 @Composable
 fun MainScreen(detector: DeepfakeDetector) {
     var croppedFaceBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
+    val activity = context as? Activity
+    val sharedPref = remember { activity?.getPreferences(Context.MODE_PRIVATE) }
+
+    var isFirst by remember {
+        val savedFirstRun = sharedPref?.getBoolean("SavedFirstRun", true)
+        mutableStateOf(savedFirstRun ?: true)
+    }
+
     var imageURI by remember { mutableStateOf<Uri?>(null) }
     var imageUrl by remember { mutableStateOf("") }
     var textFieldValue by remember { mutableStateOf("") }
@@ -132,34 +148,12 @@ fun MainScreen(detector: DeepfakeDetector) {
                 )
             )
     ) {
-        var showTooltip by remember { mutableStateOf(false) }
-        if (showTooltip) {
-            Popup(
-                alignment = Alignment.TopEnd,
-                offset = IntOffset(-60, 225) // 아이콘 아래로 약간의 여백
-            ) {
-                Box(
-                    modifier = Modifier
-                        .background(Color.DarkGray, shape = RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "이미지 업로드 시 이미지 분석 버튼 활성화\n이미지가 real일 때 인증마크 버튼 활성화",
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
-                }
-            }
+        var showInfoDialog by remember { mutableStateOf(false) } // 추가된 정보 버튼
+        if (isFirst) {
+            showInfoDialog = true
         }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.Help,
-            contentDescription = null,
-            modifier = Modifier
-                .padding(end = 20.dp, top = 35.dp)
-                .align(Alignment.TopEnd)
-                .size(30.dp)
-                .clickable { showTooltip = !showTooltip }
-        )
+        var showTooltipDialog by remember { mutableStateOf(false) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -169,13 +163,66 @@ fun MainScreen(detector: DeepfakeDetector) {
         ) {
             // 상단 타이틀
             Spacer(modifier = Modifier.weight(0.07f))
-            Text(
-                "BLUE CHECK",
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
-            Spacer(modifier = Modifier.weight(0.08f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.logo2),
+                        contentDescription = null,
+                        modifier = Modifier.size(120.dp)
+                            .offset(y = (-25).dp)
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.5f)
+                        .padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(onClick = { showInfoDialog = true }) {  // todo info
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+
+                    InfoDialog(
+                        firstRun = isFirst,
+                        showDialog = showInfoDialog,
+                        onDismiss = {
+                            showInfoDialog = false
+                            if (isFirst) {
+                                isFirst = false
+                                sharedPref?.edit()?.putBoolean("SavedFirstRun", false)
+                                    ?.apply() // 첫 실행 여부 저장
+                            }
+                        }
+                    )
+
+                    IconButton(onClick = { showTooltipDialog = true }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Help,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+
+                    TooltipDialog(
+                        showDialog = showTooltipDialog,
+                        onDismiss = { showTooltipDialog = false }
+                    )
+                }
+            }
+//            Spacer(modifier = Modifier.weight(0.005f))
             // 이미지 컨테이너
             val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.blue))
             val lottieAnimatable = rememberLottieAnimatable()
@@ -186,7 +233,6 @@ fun MainScreen(detector: DeepfakeDetector) {
                         .weight(0.9f)
                         .clip(RoundedCornerShape(15.dp))
                         .background(Color.Transparent)
-//                        .border(2.dp, Color.White, RoundedCornerShape(15.dp))
                         .padding(10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -541,7 +587,7 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
             "certified_image_${System.currentTimeMillis()}.png"
         )
         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/AiGO")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BLUE CHECK")
     }
     val resolver = context.contentResolver
     val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
@@ -552,4 +598,153 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
         }
     }
     return uri
+}
+
+@Composable
+fun InfoDialog(
+    firstRun: Boolean,
+    showDialog: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(5.dp),
+                color = Color.White,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(Color.White)
+                        .padding(25.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.SpaceAround
+                ) {
+                    Text(
+                        text = "캠페인 정보... (수정)",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(Color.Black)
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(Color.White),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        item {
+                            Text(
+                                text = "캠페인 정보 설명...(수정)",
+                                fontSize = 20.sp,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Button(onClick = { onDismiss() }) {
+                            Text(text = "나가기")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TooltipDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit
+) {
+    var dialogState by remember { mutableStateOf(DialogState.HELP1) }
+
+    val helpDialogText = when (dialogState) {
+        DialogState.HELP1 -> "이미지 선택 버튼으로 갤러리에서 이미지를 업로드하거나 이미지 주소 입력 버튼으로 이미지 주소를 통해 이미지를 업로드하세요!"
+        DialogState.HELP2 -> "이미지 분석 버튼은 이미지를 업로드해야 활성화됩니다!"
+        DialogState.HELP3 -> "이미지 분석 후 결과가 Real일 때에만 인증마크 버튼이 활성화됩니다!"
+        else -> ""
+    }
+    if (showDialog) {
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(5.dp),
+                color = Color.White,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(Color.White)
+                        .padding(25.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.SpaceAround
+                ) {
+                    Text(
+                        text = "도움말",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(Color.Black)
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    Column(
+                        modifier = Modifier
+//                            .weight(1f)
+                            .height(150.dp)
+                            .fillMaxWidth()
+                            .background(Color.White),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        Text(
+                            text = helpDialogText,
+                            fontSize = 20.sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Button(
+                            onClick = {
+                                when (dialogState) {
+                                    DialogState.HELP1 -> dialogState = DialogState.HELP2
+                                    DialogState.HELP2 -> dialogState = DialogState.HELP3
+                                    else -> {
+                                        onDismiss()
+                                        dialogState = DialogState.HELP1
+                                    }
+                                }
+                            }
+                        ) {
+                            Text(text = if (dialogState == DialogState.HELP3) "나가기" else "다음")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
