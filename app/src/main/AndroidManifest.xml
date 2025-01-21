@@ -7,16 +7,16 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/certificationmark"
-        android:label="AiGO"
-        android:roundIcon="@drawable/certificationmark"
+        android:icon="@drawable/bluecertification"
+        android:label="BLUE CHECK"
+        android:roundIcon="@drawable/bluecertification"
         android:supportsRtl="true"
         android:theme="@style/Theme.CVProject"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="AiGO"
+            android:label="BLUE CHECK"
             android:theme="@style/Theme.CVProject">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

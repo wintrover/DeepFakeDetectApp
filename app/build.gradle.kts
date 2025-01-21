@@ -71,6 +71,7 @@ dependencies {
 
     implementation ("org.pytorch:pytorch_android:2.1.0") // PyTorch
     implementation ("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
+    implementation ("com.airbnb.android:lottie-compose:6.6.2")
 
 //    implementation ("org.pytorch:pytorch_android_torchvision:2.1.0") // (옵션) torchvision 사용 시
 }
