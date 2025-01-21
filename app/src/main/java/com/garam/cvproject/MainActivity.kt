@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
@@ -636,7 +635,7 @@ fun InfoDialog(
                     )
                     Spacer(modifier = Modifier.height(15.dp))
 
-                    LazyColumn(
+                    Column(
                         modifier = Modifier
                             .height(450.dp)
                             .fillMaxWidth()
@@ -644,13 +643,13 @@ fun InfoDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top
                     ) {
-                        item {
+
                             Image(
                                 painter = painterResource(R.drawable.bluecheck1),
                                 contentDescription = "BLUE CHECK Campaign",
-                                modifier = Modifier.size(900.dp)
+                                modifier = Modifier.fillMaxSize()
                             )
-                        }
+
                     }
                     Spacer(modifier = Modifier.height(30.dp))
                     Row(
