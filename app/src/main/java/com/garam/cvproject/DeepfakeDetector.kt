@@ -246,7 +246,7 @@ class DeepfakeDetector(
             val (cls, score) = classifyBitmap(cropped)
 
             val labelStr = if (cls == 0) "Fake" else "Real"
-            val msg = "Face #$index: $labelStr (%.2f%%)".format(score * 100)
+            val msg = "$labelStr\n신뢰도 : (%.2f%%)".format(score * 100)
 
             DetectionResult(
                 faceIndex = index,

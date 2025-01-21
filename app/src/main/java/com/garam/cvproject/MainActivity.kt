@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -57,9 +56,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -107,6 +106,7 @@ fun MainScreen(detector: DeepfakeDetector) {
     var textFieldValue by remember { mutableStateOf("") }
     var showTextField by remember { mutableStateOf(false) }
     var resultText by remember { mutableStateOf("결과: 없음") } // 결과값 표시를 위한 상태
+    var resultLabel by remember { mutableStateOf("") }
 
     val env = OrtEnvironment.getEnvironment()
     val session: OrtSession =
@@ -118,6 +118,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                 imageURI = uri
                 imageUrl = ""
                 resultText = "분석 필요"
+                resultLabel = ""
             }
         }
     // 배경 색상
@@ -153,7 +154,7 @@ fun MainScreen(detector: DeepfakeDetector) {
             imageVector = Icons.AutoMirrored.Filled.Help,
             contentDescription = null,
             modifier = Modifier
-                .padding(end = 20.dp, top = 41.dp)
+                .padding(end = 20.dp, top = 35.dp)
                 .align(Alignment.TopEnd)
                 .size(30.dp)
                 .clickable { showTooltip = !showTooltip }
@@ -179,7 +180,7 @@ fun MainScreen(detector: DeepfakeDetector) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(0.6f)
                     .clip(RoundedCornerShape(15.dp))
                     .background(Color.Transparent)
                     .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
@@ -198,7 +199,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Text("image", fontSize = 20.sp, color = Color.White)
+                    Text("이미지를 업로드하세요!", fontSize = 20.sp, color = Color.White)
                 }
             }
             Spacer(modifier = Modifier.size(15.dp))
@@ -211,38 +212,32 @@ fun MainScreen(detector: DeepfakeDetector) {
                     .border(2.dp, Color.White, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Row(
+                Column(
                     modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth(0.4f)
-                            .fillMaxHeight()
-                            .background(color = Color.Yellow)
-                    ) {
-
-                        croppedFaceBitmap?.let { bmp ->
-                            Image(
-                                bitmap = bmp.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f) // 적절히 비율 조정
-                            )
-                        }
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(resultText, color = Color.White, fontSize = 20.sp)
+                    if (resultLabel == "Fake") {
+                        Text(
+                            resultText,
+                            color = Color.Red,
+                            fontSize = 25.sp,
+                            lineHeight = 40.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        Text(
+                            resultText,
+                            color = Color.White,
+                            fontSize = 25.sp,
+                            lineHeight = 40.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
+
             }
             Spacer(modifier = Modifier.weight(0.05f))
             // 버튼 Row (이미지 선택 및 이미지 주소 입력)
@@ -315,6 +310,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                                 resultText = bestResult.message
                                 // 크롭된 얼굴 이미지를 State에 저장
                                 croppedFaceBitmap = bestResult.croppedBitmap
+                                resultLabel = bestResult.label
                             } else {
                                 resultText = "결과 없음"
                                 croppedFaceBitmap = null
@@ -324,7 +320,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                             croppedFaceBitmap = null
                         }
                     }
-                }            ) {
+                }) {
                 Text("이미지 분석", fontSize = 18.sp)
             }
             Spacer(modifier = Modifier.weight(0.04f))
@@ -339,7 +335,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                     .fillMaxWidth(0.9f)
                     .height(50.dp),
 //                    .shadow(4.dp, RoundedCornerShape(15.dp)),
-                enabled = resultText == "real", // "real"일 때만 활성화
+                enabled = resultLabel == "Real", // "real"일 때만 활성화
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
                         val source = when {
@@ -404,6 +400,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                             imageUrl = textFieldValue
                             imageURI = null
                             resultText = "분석 필요"
+                            resultLabel = ""
                             showTextField = false
                         }) {
                             Text("Submit")
