@@ -176,7 +176,8 @@ fun MainScreen(detector: DeepfakeDetector) {
                     Image(
                         painter = painterResource(R.drawable.logo2),
                         contentDescription = null,
-                        modifier = Modifier.size(120.dp)
+                        modifier = Modifier
+                            .size(120.dp)
                             .offset(y = (-25).dp)
                     )
                 }
@@ -620,7 +621,7 @@ fun InfoDialog(
                     verticalArrangement = Arrangement.SpaceAround
                 ) {
                     Text(
-                        text = "캠페인 정보... (수정)",
+                        text = "BLUE CHECK 캠페인",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -637,16 +638,17 @@ fun InfoDialog(
 
                     LazyColumn(
                         modifier = Modifier
-                            .weight(1f)
+                            .height(450.dp)
                             .fillMaxWidth()
                             .background(Color.White),
-                        horizontalAlignment = Alignment.Start,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top
                     ) {
                         item {
-                            Text(
-                                text = "캠페인 정보 설명...(수정)",
-                                fontSize = 20.sp,
+                            Image(
+                                painter = painterResource(R.drawable.bluecheck1),
+                                contentDescription = "BLUE CHECK Campaign",
+                                modifier = Modifier.size(900.dp)
                             )
                         }
                     }
