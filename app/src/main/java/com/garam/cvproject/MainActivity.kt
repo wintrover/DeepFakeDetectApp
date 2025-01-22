@@ -191,10 +191,10 @@ fun MainScreen(detector: DeepfakeDetector) {
                         Icon(
                             imageVector = Icons.Filled.Info,
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
+                            tint = Color.White
                         )
                     }
-
                     InfoDialog(
                         firstRun = isFirst,
                         showDialog = showInfoDialog,
@@ -207,15 +207,14 @@ fun MainScreen(detector: DeepfakeDetector) {
                             }
                         }
                     )
-
                     IconButton(onClick = { showTooltipDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Help,
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
+                            tint = Color.White
                         )
                     }
-
                     TooltipDialog(
                         showDialog = showTooltipDialog,
                         onDismiss = { showTooltipDialog = false }
@@ -237,18 +236,27 @@ fun MainScreen(detector: DeepfakeDetector) {
                     contentAlignment = Alignment.Center
                 ) {
                     LaunchedEffect(composition) {
-                        repeat(15) {
-                            // (a) 애니메이션 1회 재생
+                        // 1) 처음 6번은 연속 재생
+                        repeat(6) {
                             lottieAnimatable.animate(
                                 composition = composition,
                                 speed = 1.0f,
                                 iterations = 1,
                                 cancellationBehavior = LottieCancellationBehavior.OnIterationFinish
                             )
-                            // (b) 재생이 끝난 후 3초 대기
-                            delay(3000L)
                         }
-                        // 10번 반복 후, 추가로 재생 없이 마지막 프레임 상태로 유지
+                        // 2) 이후에는 3초 간격으로 계속 재생
+                        while (true) {
+                            // 3초 대기
+                            delay(3000L)
+                            // 한 번 재생
+                            lottieAnimatable.animate(
+                                composition = composition,
+                                speed = 1.0f,
+                                iterations = 1,
+                                cancellationBehavior = LottieCancellationBehavior.OnIterationFinish
+                            )
+                        }
                     }
                     LottieAnimation(
                         composition = composition,
@@ -332,7 +340,8 @@ fun MainScreen(detector: DeepfakeDetector) {
                                 color = Color.Red,
                                 fontSize = 25.sp,
                                 lineHeight = 40.sp,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.SemiBold
                             )
                         } else {
                             Text(
@@ -340,7 +349,8 @@ fun MainScreen(detector: DeepfakeDetector) {
                                 color = Color.White,
                                 fontSize = 25.sp,
                                 lineHeight = 40.sp,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -492,7 +502,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                     TextField(
                         value = textFieldValue,
                         onValueChange = { textFieldValue = it },
-                        label = { Text("Enter Image URL") },
+                        label = { Text("이미지 주소를 입력하세요.") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -500,17 +510,37 @@ fun MainScreen(detector: DeepfakeDetector) {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Button(onClick = { showTextField = false }) {
-                            Text("Cancel")
+                        Button(
+                            border = BorderStroke(0.01.dp, Color.Black),
+                            shape = RoundedCornerShape(15.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFD2F0FF),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(40.dp),
+                            onClick = { showTextField = false }) {
+                            Text("취소")
                         }
-                        Button(onClick = {
-                            imageUrl = textFieldValue
-                            imageURI = null
-                            resultText = ""
-                            resultLabel = ""
-                            showTextField = false
-                        }) {
-                            Text("Submit")
+                        Button(
+                            border = BorderStroke(0.01.dp, Color.Black),
+                            shape = RoundedCornerShape(15.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFD2F0FF),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(40.dp),
+                            onClick = {
+                                imageUrl = textFieldValue
+                                imageURI = null
+                                resultText = ""
+                                resultLabel = ""
+                                showTextField = false
+                            }) {
+                            Text("업로드")
                         }
                     }
                 }
@@ -623,6 +653,7 @@ fun InfoDialog(
                         text = "BLUE CHECK 캠페인",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -637,19 +668,17 @@ fun InfoDialog(
 
                     Column(
                         modifier = Modifier
-                            .height(450.dp)
+                            .height(500.dp)
                             .fillMaxWidth()
                             .background(Color.White),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top
                     ) {
-
-                            Image(
-                                painter = painterResource(R.drawable.bluecheck1),
-                                contentDescription = "BLUE CHECK Campaign",
-                                modifier = Modifier.fillMaxSize()
-                            )
-
+                        Image(
+                            painter = painterResource(R.drawable.bluecheck1),
+                            contentDescription = "BLUE CHECK Campaign",
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                     Spacer(modifier = Modifier.height(30.dp))
                     Row(
@@ -657,7 +686,18 @@ fun InfoDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        Button(onClick = { onDismiss() }) {
+                        Button(
+                            border = BorderStroke(0.01.dp, Color.Black),
+                            shape = RoundedCornerShape(15.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFD2F0FF),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(45.dp),
+                            onClick = { onDismiss() }
+                        ) {
                             Text(text = "나가기")
                         }
                     }
@@ -675,10 +715,19 @@ fun TooltipDialog(
     var dialogState by remember { mutableStateOf(DialogState.HELP1) }
 
     val helpDialogText = when (dialogState) {
-        DialogState.HELP1 -> "이미지 선택 버튼으로 갤러리에서 이미지를 업로드하거나 이미지 주소 입력 버튼으로 이미지 주소를 통해 이미지를 업로드하세요!"
+        DialogState.HELP1 -> "이미지 선택 버튼으로 갤러리 이미지를 업로드하거나 이미지 주소 입력 버튼으로 이미지 주소를 통해 이미지를 업로드하세요!"
         DialogState.HELP2 -> "이미지 분석 버튼은 이미지를 업로드해야 활성화됩니다!"
         DialogState.HELP3 -> "이미지 분석 후 결과가 Real일 때에만 인증마크 버튼이 활성화됩니다!"
         else -> ""
+    }
+    var numText = if (dialogState == DialogState.HELP1) {
+        "1/3"
+    } else if (dialogState == DialogState.HELP2) {
+        "2/3"
+    } else if (dialogState == DialogState.HELP3) {
+        "3/3"
+    } else {
+        ""
     }
     if (showDialog) {
         Dialog(onDismissRequest = onDismiss) {
@@ -697,6 +746,7 @@ fun TooltipDialog(
                         text = "도움말",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -715,8 +765,8 @@ fun TooltipDialog(
                             .height(150.dp)
                             .fillMaxWidth()
                             .background(Color.White),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Top
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             text = helpDialogText,
@@ -724,12 +774,20 @@ fun TooltipDialog(
                         )
                     }
                     Spacer(modifier = Modifier.height(30.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.Bottom
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Button(
+                            border = BorderStroke(0.01.dp, Color.Black),
+                            shape = RoundedCornerShape(15.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFD2F0FF),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(45.dp)
+                                .align(Alignment.Center),
                             onClick = {
                                 when (dialogState) {
                                     DialogState.HELP1 -> dialogState = DialogState.HELP2
@@ -743,6 +801,13 @@ fun TooltipDialog(
                         ) {
                             Text(text = if (dialogState == DialogState.HELP3) "나가기" else "다음")
                         }
+                        Text(
+                            text = numText,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 5.dp),
+                            fontSize = 15.sp
+                        )
                     }
                 }
             }
