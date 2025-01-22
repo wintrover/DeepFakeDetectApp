@@ -151,8 +151,8 @@ fun MainScreen(detector: DeepfakeDetector) {
                     colors = listOf(Color(0xFF427CFA), Color.White)
                 )
             )
-            .pointerInput(Unit){
-                detectTapGestures { localFocusManager.clearFocus() }
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { localFocusManager.clearFocus() })
             }
     ) {
         var showInfoDialog by remember { mutableStateOf(false) } // 추가된 정보 버튼
