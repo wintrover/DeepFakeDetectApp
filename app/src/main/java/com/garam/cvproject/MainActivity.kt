@@ -45,9 +45,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -127,6 +127,7 @@ fun MainScreen(detector: DeepfakeDetector) {
     var showTextField by remember { mutableStateOf(false) }
     var resultText by remember { mutableStateOf("") } // 결과값 표시를 위한 상태
     var resultLabel by remember { mutableStateOf("") }
+    var resultConf by remember { mutableStateOf("") }
 
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -338,19 +339,35 @@ fun MainScreen(detector: DeepfakeDetector) {
                             Text(
                                 resultText,
                                 color = Color.Red,
+                                fontSize = 35.sp,
+                                lineHeight = 40.sp,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                resultConf,
+                                color = Color.DarkGray,
                                 fontSize = 25.sp,
                                 lineHeight = 40.sp,
                                 textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         } else {
                             Text(
                                 resultText,
                                 color = Color.White,
+                                fontSize = 35.sp,
+                                lineHeight = 40.sp,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                resultConf,
+                                color = Color.White,
                                 fontSize = 25.sp,
                                 lineHeight = 40.sp,
                                 textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
@@ -380,7 +397,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                         pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 ) {
-                    Text("이미지 선택", fontSize = 13.sp)
+                    Text("이미지 선택", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 // 이미지 주소 입력 버튼
@@ -397,7 +414,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                         .shadow(4.dp, RoundedCornerShape(15.dp)),
                     onClick = { showTextField = true }
                 ) {
-                    Text("이미지 주소 입력", fontSize = 13.sp)
+                    Text("이미지 주소 입력", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.weight(0.04f))
@@ -412,7 +429,14 @@ fun MainScreen(detector: DeepfakeDetector) {
                 enabled = imageURI != null || imageUrl.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(50.dp),
+                    .height(50.dp)
+                    .run {
+                        if (imageURI != null || imageUrl.isNotBlank()) {
+                            shadow(4.dp, RoundedCornerShape(15.dp))
+                        } else {
+                            this
+                        }
+                    },
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
                         // 1) Bitmap 로딩
@@ -428,6 +452,8 @@ fun MainScreen(detector: DeepfakeDetector) {
                                 // 크롭된 얼굴 이미지를 State에 저장
                                 croppedFaceBitmap = bestResult.croppedBitmap
                                 resultLabel = bestResult.label
+                                resultConf = bestResult.conf
+
                             } else {
                                 resultText = "결과 없음"
                                 croppedFaceBitmap = null
@@ -451,7 +477,14 @@ fun MainScreen(detector: DeepfakeDetector) {
                 ),
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(50.dp),
+                    .height(50.dp)
+                    .run {
+                        if (resultLabel == "Real") {
+                            shadow(4.dp, RoundedCornerShape(15.dp))
+                        } else {
+                            this
+                        }
+                    },
                 enabled = resultLabel == "Real", // "real"일 때만 활성화
                 onClick = {
                     CoroutineScope(Dispatchers.Main).launch {
@@ -499,7 +532,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TextField(
+                    OutlinedTextField(
                         value = textFieldValue,
                         onValueChange = { textFieldValue = it },
                         label = { Text("이미지 주소를 입력하세요.") },
@@ -695,7 +728,8 @@ fun InfoDialog(
                             ),
                             modifier = Modifier
                                 .fillMaxWidth(0.5f)
-                                .height(45.dp),
+                                .height(45.dp)
+                                .shadow(4.dp, RoundedCornerShape(15.dp)),
                             onClick = { onDismiss() }
                         ) {
                             Text(text = "나가기")
@@ -787,7 +821,8 @@ fun TooltipDialog(
                             modifier = Modifier
                                 .fillMaxWidth(0.5f)
                                 .height(45.dp)
-                                .align(Alignment.Center),
+                                .align(Alignment.Center)
+                                .shadow(4.dp, RoundedCornerShape(15.dp)),
                             onClick = {
                                 when (dialogState) {
                                     DialogState.HELP1 -> dialogState = DialogState.HELP2

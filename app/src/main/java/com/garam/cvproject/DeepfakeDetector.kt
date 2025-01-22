@@ -33,6 +33,7 @@ class DeepfakeDetector(
         val label: String,
         val confidence: Float,
         val message: String,
+        val conf: String,
         val croppedBitmap: Bitmap?
     )
 
@@ -230,12 +231,14 @@ class DeepfakeDetector(
             val (cls, score) = classifyBitmap(bitmap)
             val labelStr = if (cls == 0) "Fake" else "Real"
             val msg = "No Face Detected → $labelStr (%.2f%%)".format(score * 100)
+            val conf = "신뢰도 : (%.2f%%)".format(score * 100)
 
             return DetectionResult(
                 faceIndex = -1,
                 label = labelStr,
                 confidence = score,
                 message = msg,
+                conf = conf,
                 croppedBitmap = bitmap
             )
         }
@@ -246,14 +249,16 @@ class DeepfakeDetector(
             val (cls, score) = classifyBitmap(cropped)
 
             val labelStr = if (cls == 0) "Fake" else "Real"
-            val msg = "$labelStr\n신뢰도 : (%.2f%%)".format(score * 100)
-
+            val msg = labelStr
+            val conf = "신뢰도 : %.2f%%".format(score * 100)
             DetectionResult(
                 faceIndex = index,
                 label = labelStr,
                 confidence = score,
                 message = msg,
+                conf = conf,
                 croppedBitmap = cropped
+
             )
         }
 
