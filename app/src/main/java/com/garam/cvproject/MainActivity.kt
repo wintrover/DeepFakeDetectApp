@@ -23,6 +23,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,7 +61,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -111,6 +114,7 @@ enum class DialogState { NONE, HELP1, HELP2, HELP3 }
 
 @Composable
 fun MainScreen(detector: DeepfakeDetector) {
+    val localFocusManager = LocalFocusManager.current
     var croppedFaceBitmap by remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
     val activity = context as? Activity
@@ -147,6 +151,9 @@ fun MainScreen(detector: DeepfakeDetector) {
                     colors = listOf(Color(0xFF427CFA), Color.White)
                 )
             )
+            .pointerInput(Unit){
+                detectTapGestures { localFocusManager.clearFocus() }
+            }
     ) {
         var showInfoDialog by remember { mutableStateOf(false) } // 추가된 정보 버튼
         if (isFirst) {
@@ -572,6 +579,7 @@ fun MainScreen(detector: DeepfakeDetector) {
                                 resultText = ""
                                 resultLabel = ""
                                 showTextField = false
+                                textFieldValue = ""
                             }) {
                             Text("업로드")
                         }
