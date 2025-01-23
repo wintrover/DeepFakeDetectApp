@@ -643,7 +643,7 @@ suspend fun addCertificationMarkFromSourceAsync(source: Any, context: Context): 
         return null
     }
     val density = context.resources.displayMetrics.density
-    val marginPx = (8 * density).toInt() // 여백을 dp에서 픽셀로 변환
+    val marginPx = (4 * density).toInt() // 여백을 dp에서 픽셀로 변환
     val markSize = (bitmap.width * 0.1).toInt() // 인증마크 크기 (이미지의 10%)
     val left = bitmap.width - markSize - marginPx // 우측 하단에 위치
     val top = bitmap.height - markSize - marginPx
