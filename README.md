@@ -71,6 +71,8 @@ Apache License 2.0 </br>
   - Kotlin: Android Kotlin Style Guide 준수
     
 ## 🤝 기여
+팀 이름 : CloseAI
+
 | 역할 | 이름 |
 |------|------|
 | 기획 및 총괄 | 이승헌 |
