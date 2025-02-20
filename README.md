@@ -77,7 +77,7 @@ Team Name: CloseAI
 | Role | Member |
 |------|--------|
 | Project Lead | Seungheon Lee |
-| AI Model Dev | Suhyeok Yun |
+| AI Model Dev | Suhyok Yun |
 | App Development | Garam Kim |
 | UI/UX Design | Soyeon Kim |
 
