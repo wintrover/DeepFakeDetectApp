@@ -33,9 +33,7 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 
 ### 설치 방법
 ```bash
-git clone https://github.com/your-repo/blue-check.git
-cd blue-check
-./gradlew assembleDebug
+git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
 ## 앱 실행
