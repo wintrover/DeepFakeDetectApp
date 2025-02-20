@@ -63,17 +63,23 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
 ## 📄 라이선스
-Apache License 2.0
+Apache License 2.0 </br>
 모델 파일 및 학습 데이터는 별도 라이선스가 적용될 수 있습니다.
 
 ## 🤝 기여
 1. Issue 생성으로 제안 사항 공유
 2. Fork 후 Pull Request 작성
 3. 코드 컨벤션
-- Kotlin: Android Kotlin Style Guide 준수
-- XML: snake_case 네이밍
-- 컴포즈: Material3 디자인 가이드라인 적용
+  - Kotlin: Android Kotlin Style Guide 준수
+  - XML: snake_case 네이밍
+  - 컴포즈: Material3 디자인 가이드라인 적용
+
+| 역할 | 이름 |
+|------|------|
+| 기획 및 총괄 | 이승헌 |
+| AI모델 개발 | 윤수혁 |
+| 앱 제작 | 김가람 |
+| UI/UX 디자인 | 김소연 |
 
 ## 📬 문의
-개발자: wintrover
-이메일: wintrover@gmail.com
+wintrover@gmail.com </br>
