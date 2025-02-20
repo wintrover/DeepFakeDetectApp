@@ -3,8 +3,7 @@
 ![로고](./res/mipmap-anydpi-v26/logo2.xml)
 
 ## 📖 개요
-YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용해 이미지 내 딥페이크를 탐지하는 안드로이드 앱입니다.</br>
-Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공합니다.
+YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용해 이미지 내 딥페이크를 탐지하는 안드로이드 앱입니다. Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공합니다.
 
 ## ✨ 주요 기능
 - **멀티 소스 이미지 업로드**
@@ -33,6 +32,16 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 ### 전제 조건
 - Android Studio Giraffe 이상
 - Android SDK 34 (API 34)
+
+## 3️⃣ 앱 실행
+- Android Studio에서 MainActivity.kt를 실행
+- 물리 기기 또는 에뮬레이터에서 실행 가능
+
+## 🖥 사용 방법
+- 이미지 업로드
+- [이미지 선택] 버튼: 로컬 갤러리 접근
+- [이미지 주소 입력] 버튼: 웹 이미지 URL 입력
+
 - Gradle 8.0+
 
 ### 설치 방법
