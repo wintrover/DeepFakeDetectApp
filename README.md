@@ -33,19 +33,51 @@ YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용
 - Android Studio Giraffe 이상
 - Android SDK 34 (API 34)
 
-## 3️⃣ 앱 실행
-- Android Studio에서 MainActivity.kt를 실행
-- 물리 기기 또는 에뮬레이터에서 실행 가능
-
-## 🖥 사용 방법
-- 이미지 업로드
-- [이미지 선택] 버튼: 로컬 갤러리 접근
-- [이미지 주소 입력] 버튼: 웹 이미지 URL 입력
-
-- Gradle 8.0+
-
 ### 설치 방법
 ```bash
 git clone https://github.com/your-repo/blue-check.git
 cd blue-check
 ./gradlew assembleDebug
+```
+
+## 앱 실행
+- Android Studio에서 MainActivity.kt를 실행
+- 물리 기기 또는 에뮬레이터에서 실행 가능
+
+## 🖥 사용 방법
+1. 이미지 업로드
+- [이미지 선택] 버튼: 로컬 갤러리 접근
+- [이미지 주소 입력] 버튼: 웹 이미지 URL 입력
+2. 인증 마크 추가
+- Real 판정 시 [인증마크] 버튼 활성화 → 갤러리에 저장
+
+📁 프로젝트 구조
+```bash
+.
+├── app
+│   ├── src/main
+│   │   ├── java/com/garam/cvproject
+│   │   │   ├── DeepfakeDetector.kt  # AI 모델 핸들러
+│   │   │   └── MainActivity.kt      # 컴포즈 UI 메인
+│   │   ├── res
+│   │   │   ├── drawable           # 벡터 애셋
+│   │   │   └── mipmap             # 런처 아이콘
+│   │   └── assets                 # ONNX 모델 파일
+└── build.gradle                   # 종속성 관리
+```
+
+📄 라이선스
+Apache License 2.0
+모델 파일 및 학습 데이터는 별도 라이선스가 적용될 수 있습니다.
+
+🤝 기여
+1. Issue 생성으로 제안 사항 공유
+2. Fork 후 Pull Request 작성
+3. 코드 컨벤션
+- Kotlin: Android Kotlin Style Guide 준수
+- XML: snake_case 네이밍
+- 컴포즈: Material3 디자인 가이드라인 적용
+
+📬 문의
+개발자: wintrover
+이메일: wintrover@gmail.com
