@@ -1,12 +1,10 @@
 # BLUE CHECK - 딥페이크 탐지 안드로이드 애플리케이션
 
-![로고](./res/mipmap-anydpi-v26/logo2.xml)
+<img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
 
 ## 📖 개요
 Blue Check는 YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용해 이미지 내 딥페이크를 탐지하는 안드로이드 앱입니다. </br>
-Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공합니다. </br>
-</br>
-[프레젠테이션](https://www.figma.com/slides/TUGUQwflyC8nOUoM5t31t6/INTEL-3%EA%B8%B0-1%EC%A1%B0-CloseAI%ED%8C%80?node-id=140-714&t=BT8xHOLGgWxKHT3Y-0)
+Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공합니다.
 
 ## ✨ 주요 기능
 - **Deepfake 탐지**:
