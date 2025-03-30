@@ -1,5 +1,7 @@
 # Blue Check - Deepfake Detection Android Application
 
+[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.kr.md)
+
 <img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
 
 ## 📖 Overview
