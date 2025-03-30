@@ -37,6 +37,7 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 | 비동기 | Kotlin Coroutine |
 | 이미지 | Coil 2.5+ |
 | 애니메이션 | Lottie 6.1+ |
+| 컨테이너화 | Docker |
 
 ## 🧠 AI 모델 아키텍처
 | 구성 요소 | 설명 |
@@ -60,6 +61,7 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 ### 전제 조건
 - Android Studio Giraffe 이상
 - Android SDK 34 (API 34)
+- 또는 Docker를 사용한 컨테이너화된 빌드 환경
 
 ### 설치 방법
 저장소 복제:
@@ -68,8 +70,30 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
 ### 앱 실행
+
+#### 방법 1: Android Studio 사용
 - Android Studio에서 프로젝트 열기
 - 물리 기기 또는 에뮬레이터에서 빌드 및 실행
+
+#### 방법 2: Docker 사용
+Docker를 사용하여 APK 빌드:
+```bash
+# 프로젝트 루트 디렉토리에서
+docker compose up
+
+# APK는 app/build/outputs/apk/debug/ 경로에 생성됩니다
+```
+
+또는 Docker로 직접 빌드:
+```bash
+docker build -t deepfakedetect-builder .
+docker run --rm -v "$(pwd)":/app deepfakedetect-builder
+```
+
+빌드된 APK 설치:
+```bash
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
 
 ## 🖥 사용 방법
 1. **이미지 업로드**
@@ -85,19 +109,21 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```bash
 .
 ├── app
-│   ├── src/main
-│   │   ├── java/com/garam/cvproject
-│   │   │   ├── DeepfakeDetector.kt  # AI 모델 핸들러
-│   │   │   ├── ModelOptimizer.kt    # 추론 최적화
-│   │   │   ├── ModelQuantizer.kt    # 모델 압축
-│   │   │   ├── PerformanceMonitor.kt # 런타임 측정
-│   │   │   └── MainActivity.kt      # 컴포즈 UI 메인
-│   │   ├── res
-│   │   │   ├── drawable           # 벡터 애셋
-│   │   │   └── mipmap             # 런처 아이콘
-│   │   └── assets                 # ONNX 모델 파일
-│   │      ├── yolov11n-face.onnx # 얼굴 검출
-│   │      └── deepfake_binary_s128_e5_early.onnx # 딥페이크 분류
+│ ├── src/main
+│ │ ├── java/com/garam/cvproject
+│ │ │ ├── DeepfakeDetector.kt  # AI 모델 핸들러
+│ │ │ ├── ModelOptimizer.kt    # 추론 최적화
+│ │ │ ├── ModelQuantizer.kt    # 모델 압축
+│ │ │ ├── PerformanceMonitor.kt # 런타임 측정
+│ │ │ └── MainActivity.kt      # 컴포즈 UI 메인
+│ │ ├── res
+│ │ │ ├── drawable           # 벡터 애셋
+│ │ │ └── mipmap             # 런처 아이콘
+│ │ └── assets                 # ONNX 모델 파일
+│ │    ├── yolov11n-face.onnx # 얼굴 검출
+│ │    └── deepfake_binary_s128_e5_early.onnx # 딥페이크 분류
+├── Dockerfile                   # 안드로이드 빌드 환경
+├── docker-compose.yml           # Docker 구성
 └── build.gradle                   # 종속성 관리
 ```
 

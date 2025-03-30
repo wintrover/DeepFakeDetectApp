@@ -36,6 +36,7 @@ Blue Check is an Android application that detects deepfakes in images using YOLO
 | Asynchronous | Kotlin Coroutine |
 | Image Loading | Coil 2.5+ |
 | Animation | Lottie 6.1+ |
+| Containerization | Docker |
 
 ## 🧠 AI Model Architecture
 | Component | Description |
@@ -59,6 +60,7 @@ Blue Check is an Android application that detects deepfakes in images using YOLO
 ### Prerequisites
 - Android Studio Giraffe or newer
 - Android SDK 34 (API 34)
+- Alternatively: Docker for containerized build
 
 ### Installation
 Clone the repository:
@@ -67,8 +69,30 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
 ### Running the App
+
+#### Option 1: Using Android Studio
 - Open project in Android Studio
 - Build and run on a physical device or emulator
+
+#### Option 2: Using Docker
+Build the APK using Docker:
+```bash
+# In the project root directory
+docker compose up
+
+# APK will be available in app/build/outputs/apk/debug/
+```
+
+Or build directly with Docker:
+```bash
+docker build -t deepfakedetect-builder .
+docker run --rm -v "$(pwd)":/app deepfakedetect-builder
+```
+
+Install the APK on your device:
+```bash
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
 
 ## 🖥 Usage
 1. **Image Upload**
@@ -97,6 +121,8 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 │ │ └── assets # ONNX model files
 │ │    ├── yolov11n-face.onnx # Face detection
 │ │    └── deepfake_binary_s128_e5_early.onnx # Classification
+├── Dockerfile # Android build environment
+├── docker-compose.yml # Docker configuration
 └── build.gradle # Dependency management
 ```
 

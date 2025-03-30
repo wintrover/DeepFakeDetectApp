@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+      - gradle-cache:/root/.gradle
+    command: "./gradlew assembleDebug"
+    environment:
+      - GRADLE_USER_HOME=/root/.gradle
+      - ANDROID_HOME=/opt/android-sdk
+
+volumes:
+  gradle-cache: 
