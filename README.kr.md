@@ -26,6 +26,24 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 | 이미지 | Coil 2.5+ |
 | 애니메이션 | Lottie 6.1+ |
 
+## 🧠 AI 모델 아키텍처
+| 구성 요소 | 설명 |
+|----------|------|
+| 얼굴 검출 | 모바일 최적화된 YOLOv11n 얼굴 검출 모델 |
+| 딥페이크 분류기 | Early Exit 적용 이진 분류 CNN (정확도 97.5%) |
+| 모델 포맷 | 크로스 플랫폼 호환성 및 하드웨어 가속을 위한 ONNX |
+| 입력 크기 | 분류 모델 128x128px, 얼굴 검출 640x640px |
+| 최적화 | Int8 양자화, 메모리 최적화, 추론 캐싱 |
+
+## 📊 성능 최적화
+- **모델 양자화**: Int8 양자화로 모델 크기 약 70% 감소, 정확도 손실 최소화
+- **추론 최적화**: 
+  - 메모리 버퍼 재사용 및 커스텀 전처리 파이프라인
+  - Kotlin Coroutines를 활용한 비동기 처리
+  - 가능한 경우 GPU 위임
+- **런타임 캐싱**: 모델 및 추론 결과 캐싱으로 반복 계산 감소
+- **성능 모니터링**: 실시간 메모리 및 CPU 사용량 추적과 자동 최적화
+
 ## 🚀 시작하기
 ### 전제 조건
 - Android Studio Giraffe 이상
@@ -54,11 +72,16 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 │   ├── src/main
 │   │   ├── java/com/garam/cvproject
 │   │   │   ├── DeepfakeDetector.kt  # AI 모델 핸들러
+│   │   │   ├── ModelOptimizer.kt    # 추론 최적화
+│   │   │   ├── ModelQuantizer.kt    # 모델 압축
+│   │   │   ├── PerformanceMonitor.kt # 런타임 측정
 │   │   │   └── MainActivity.kt      # 컴포즈 UI 메인
 │   │   ├── res
 │   │   │   ├── drawable           # 벡터 애셋
 │   │   │   └── mipmap             # 런처 아이콘
 │   │   └── assets                 # ONNX 모델 파일
+│   │      ├── yolov11n-face.onnx # 얼굴 검출
+│   │      └── deepfake_binary_s128_e5_early.onnx # 딥페이크 분류
 └── build.gradle                   # 종속성 관리
 ```
 

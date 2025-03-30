@@ -25,6 +25,24 @@ Blue Check is an Android application that detects deepfakes in images using YOLO
 | Image Loading | Coil 2.5+ |
 | Animation | Lottie 6.1+ |
 
+## 🧠 AI Model Architecture
+| Component | Description |
+|-----------|-------------|
+| Face Detection | YOLOv11n optimized for mobile face detection |
+| Deepfake Classifier | Binary classification CNN with early exit (97.5% accuracy) |
+| Model Format | ONNX for cross-platform compatibility and hardware acceleration |
+| Input Size | 128x128px for classification, 640x640px for face detection |
+| Optimization | Int8 quantization, memory optimization, and inference caching |
+
+## 📊 Performance Optimizations
+- **Model Quantization**: Int8 quantization reduces model size by ~70% with minimal accuracy loss
+- **Inference Optimization**: 
+  - Memory buffer reuse and custom preprocessing pipeline
+  - Asynchronous processing with Kotlin Coroutines
+  - GPU delegation where available
+- **Runtime Caching**: Model and inference results caching reduces repeated computations
+- **Performance Monitoring**: Real-time memory and CPU usage tracking with automatic optimization
+
 ## 🚀 Getting Started
 ### Prerequisites
 - Android Studio Giraffe or newer
@@ -54,11 +72,16 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 │ ├── src/main
 │ │ ├── java/com/garam/cvproject
 │ │ │ ├── DeepfakeDetector.kt # AI model handler
+│ │ │ ├── ModelOptimizer.kt   # Inference optimization
+│ │ │ ├── ModelQuantizer.kt   # Model compression
+│ │ │ ├── PerformanceMonitor.kt # Runtime metrics
 │ │ │ └── MainActivity.kt # Compose UI main
 │ │ ├── res
 │ │ │ ├── drawable # Vector assets
 │ │ │ └── mipmap # Launcher icons
 │ │ └── assets # ONNX model files
+│ │    ├── yolov11n-face.onnx # Face detection
+│ │    └── deepfake_binary_s128_e5_early.onnx # Classification
 └── build.gradle # Dependency management
 ```
 
