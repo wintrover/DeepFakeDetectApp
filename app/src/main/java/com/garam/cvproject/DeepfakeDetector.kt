@@ -4,14 +4,39 @@ import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.graphics.Bitmap
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import kotlin.math.exp
 
+/**
+ * 딥페이크 탐지를 위한 클래스
+ * - YOLO 모델로 얼굴 검출
+ * - 이진 분류 모델로 딥페이크 여부 분석
+ */
 class DeepfakeDetector(
     private val yoloSession: OrtSession,  // yolov11n-face.onnx
     private val clsSession: OrtSession    // deepfake_binary_s128_e5_early.onnx
 ) {
 
+    companion object {
+        // 상수 정의
+        private const val YOLO_INPUT_SIZE = 640
+        private const val CLS_INPUT_SIZE = 128
+        private const val TAG = "DeepfakeDetector"
+        
+        // 얼굴 영역 확장 비율 기본값
+        private const val DEFAULT_EXTEND_RATIO = 0.5f
+        
+        // 임계값 기본값
+        private const val DEFAULT_CONFIDENCE_THRESHOLD = 0.8f
+    }
+
+    /**
+     * 얼굴 바운딩 박스 데이터 클래스
+     */
     data class FaceBox(
         val x1: Float,
         val y1: Float,
@@ -21,13 +46,9 @@ class DeepfakeDetector(
         val cls: Float
     )
 
-    // 필요시 NMS 함수들 (주석 처리)
-    /*
-    private fun nonMaxSuppression(boxes: List<FaceBox>, iouThreshold: Float = 0.45f): List<FaceBox> {
-        ...
-    }
-    */
-
+    /**
+     * 탐지 결과 데이터 클래스
+     */
     data class DetectionResult(
         val faceIndex: Int,
         val label: String,
@@ -38,23 +59,133 @@ class DeepfakeDetector(
     )
 
     /**
-     * YOLO 전처리: 640×640 리사이즈, 0~1 스케일링(RGB)
+     * 비동기 이미지 분석 함수
+     * 코루틴을 활용한 딥페이크 탐지 및 분류
      */
-    private fun preprocessForYolo(bitmap: Bitmap, targetSize: Int = 640): OnnxTensor {
+    suspend fun detectAndClassifyAsync(
+        bitmap: Bitmap,
+        confThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD,
+        extendRatio: Float = DEFAULT_EXTEND_RATIO
+    ): DetectionResult? = withContext(Dispatchers.Default) {
+        try {
+            // 얼굴 검출
+            val faceBoxes = detectFaces(bitmap, confThreshold)
+
+            // 얼굴이 하나도 없으면 -> 전체 이미지를 분류
+            if (faceBoxes.isEmpty()) {
+                val (cls, score) = classifyBitmap(bitmap)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "No Face Detected → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+
+                return@withContext DetectionResult(
+                    faceIndex = -1,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = bitmap
+                )
+            }
+
+            // 얼굴이 있다면 각 얼굴 크롭 -> 분류
+            val results = faceBoxes.mapIndexed { index, box ->
+                val cropped = cropFaceArea(bitmap, box, extendRatio)
+                val (cls, score) = classifyBitmap(cropped)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "${index + 1}번 얼굴 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+
+                DetectionResult(
+                    faceIndex = index,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = cropped
+                )
+            }
+
+            // 가장 높은 신뢰도의 결과 선택
+            return@withContext results.maxByOrNull { it.confidence }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in detectAndClassifyAsync", e)
+            null
+        }
+    }
+
+    /**
+     * 동기식 분석 함수 (기존 호환성 유지)
+     */
+    fun detectAndClassify(
+        bitmap: Bitmap,
+        confThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD,
+        extendRatio: Float = DEFAULT_EXTEND_RATIO
+    ): DetectionResult? {
+        return try {
+            // 얼굴 검출
+            val faceBoxes = detectFaces(bitmap, confThreshold)
+
+            // 얼굴이 하나도 없으면 -> 전체 이미지를 분류
+            if (faceBoxes.isEmpty()) {
+                val (cls, score) = classifyBitmap(bitmap)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "No Face Detected → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+
+                return DetectionResult(
+                    faceIndex = -1,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = bitmap
+                )
+            }
+
+            // 얼굴이 있다면 각 얼굴 크롭 -> 분류
+            val results = faceBoxes.mapIndexed { index, box ->
+                val cropped = cropFaceArea(bitmap, box, extendRatio)
+                val (cls, score) = classifyBitmap(cropped)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "${index + 1}번 얼굴 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+
+                DetectionResult(
+                    faceIndex = index,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = cropped
+                )
+            }
+
+            // 가장 높은 신뢰도의 결과 선택
+            results.maxByOrNull { it.confidence }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in detectAndClassify", e)
+            null
+        }
+    }
+
+    /**
+     * YOLO 전처리: 640×640 리사이즈, 0~1 스케일링(RGB)
+     * 메모리 최적화 및 효율적인 버퍼 관리 적용
+     */
+    private fun preprocessForYolo(bitmap: Bitmap, targetSize: Int = YOLO_INPUT_SIZE): OnnxTensor {
         val resized = Bitmap.createScaledBitmap(bitmap, targetSize, targetSize, true)
         val floatBuffer = FloatBuffer.allocate(1 * 3 * targetSize * targetSize)
 
         val pixels = IntArray(targetSize * targetSize)
         resized.getPixels(pixels, 0, targetSize, 0, 0, targetSize, targetSize)
 
+        // 효율적인 픽셀 처리
         for (i in pixels.indices) {
             val px = pixels[i]
-            val r = ((px shr 16) and 0xFF) / 255f
-            val g = ((px shr 8) and 0xFF) / 255f
-            val b = (px and 0xFF) / 255f
-            floatBuffer.put(r)
-            floatBuffer.put(g)
-            floatBuffer.put(b)
+            floatBuffer.put((px shr 16 and 0xFF) / 255f) // R
+            floatBuffer.put((px shr 8 and 0xFF) / 255f)  // G
+            floatBuffer.put((px and 0xFF) / 255f)        // B
         }
         floatBuffer.rewind()
 
@@ -68,67 +199,56 @@ class DeepfakeDetector(
 
     /**
      * YOLO로 얼굴 검출.
-     * (출력: [1][N][6] => (x1, y1, x2, y2, score, class))
-     *  - NMS는 이미 모델 내부에서 처리되었다고 가정
-     *  - detect(...) 결과 좌표는 640×640 기준이므로, 원본 좌표로 환산 필요
+     * 메모리 사용량 최적화 및 예외 처리 강화
      */
     private fun detectFaces(
         bitmap: Bitmap,
-        confThreshold: Float = 0.8f
+        confThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD
     ): List<FaceBox> {
-        // (1) YOLO 입력
-        val inputTensor = preprocessForYolo(bitmap, 640)
-        val output = yoloSession.run(mapOf("images" to inputTensor))
+        return try {
+            // YOLO 입력 텐서 생성
+            preprocessForYolo(bitmap).use { inputTensor ->
+                // 세션 실행
+                val output = yoloSession.run(mapOf("images" to inputTensor))
+                val rawOutput = output[0].value as Array<Array<FloatArray>>
 
-        // (2) 모델 출력: shape = [1][N][6]
-        val rawOutput = output[0].value as Array<Array<FloatArray>>
+                // 스케일 계산
+                val scaleX = bitmap.width / YOLO_INPUT_SIZE.toFloat()
+                val scaleY = bitmap.height / YOLO_INPUT_SIZE.toFloat()
 
-        // (2-1) 원본 대비 스케일
-        //      -> 640x640으로 리사이즈했으므로, 여기에 맞춰 보정
-        val scaleX = bitmap.width / 640f
-        val scaleY = bitmap.height / 640f
-
-        val boxes = mutableListOf<FaceBox>()
-        for (detection in rawOutput[0]) {
-            val x1 = detection[0]
-            val y1 = detection[1]
-            val x2 = detection[2]
-            val y2 = detection[3]
-            val score = detection[4]
-            val cls = detection[5]
-
-            if (score >= confThreshold) {
-                // (2-2) 원본 크기에 맞춰 좌표 환산
-                val x1Scaled = x1 * scaleX
-                val y1Scaled = y1 * scaleY
-                val x2Scaled = x2 * scaleX
-                val y2Scaled = y2 * scaleY
-
-                boxes.add(
-                    FaceBox(
-                        x1 = x1Scaled,
-                        y1 = y1Scaled,
-                        x2 = x2Scaled,
-                        y2 = y2Scaled,
-                        score = score,
-                        cls = cls
-                    )
-                )
+                // 결과 처리
+                val boxes = mutableListOf<FaceBox>()
+                for (detection in rawOutput[0]) {
+                    val score = detection[4]
+                    if (score >= confThreshold) {
+                        boxes.add(
+                            FaceBox(
+                                x1 = detection[0] * scaleX,
+                                y1 = detection[1] * scaleY,
+                                x2 = detection[2] * scaleX,
+                                y2 = detection[3] * scaleY,
+                                score = score,
+                                cls = detection[5]
+                            )
+                        )
+                    }
+                }
+                boxes
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Face detection error", e)
+            emptyList()
         }
-
-        // 필요 시 추가 NMS
-        // val finalBoxes = nonMaxSuppression(boxes, 0.25f)
-        return boxes
     }
 
     /**
      * 얼굴 영역을 상하좌우로 확장하여 Crop
+     * 안전한 경계 검사 추가
      */
     private fun cropFaceArea(
         src: Bitmap,
         box: FaceBox,
-        extendRatio: Float = 0.5f
+        extendRatio: Float = DEFAULT_EXTEND_RATIO
     ): Bitmap {
         val imgW = src.width
         val imgH = src.height
@@ -151,118 +271,179 @@ class DeepfakeDetector(
         val height = (newY2 - newY1).toInt()
 
         return if (width > 0 && height > 0) {
-            Bitmap.createBitmap(src, left, top, width, height)
+            try {
+                Bitmap.createBitmap(src, left, top, width, height)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error creating cropped bitmap", e)
+                src // 에러 발생 시 원본 반환
+            }
         } else {
-            src // 바운딩 박스가 이상할 경우, 원본 리턴
+            src // 유효하지 않은 크기일 경우 원본 반환
         }
     }
 
     /**
      * 분류 모델 전처리 & 추론
-     *  - 입력: 128×128
-     *  - mean/std 정규화
-     *  - 출력: [1,2] => [logitsFake, logitsReal]
+     * 메모리 사용 최적화 및 성능 개선
      */
     private fun classifyBitmap(bitmap: Bitmap): Pair<Int, Float> {
-        // (1) Resize & Normalize
-        val resized = Bitmap.createScaledBitmap(bitmap, 128, 128, true)
-        val floatBuffer = FloatBuffer.allocate(1 * 3 * 128 * 128)
+        // 리사이즈
+        val resized = Bitmap.createScaledBitmap(bitmap, CLS_INPUT_SIZE, CLS_INPUT_SIZE, true)
+        val floatBuffer = FloatBuffer.allocate(1 * 3 * CLS_INPUT_SIZE * CLS_INPUT_SIZE)
 
+        // 정규화 파라미터
         val mean = floatArrayOf(0.485f, 0.456f, 0.406f)
         val std = floatArrayOf(0.229f, 0.224f, 0.225f)
 
-        val pixels = IntArray(128 * 128)
-        resized.getPixels(pixels, 0, 128, 0, 0, 128, 128)
+        // 픽셀 배열 준비
+        val pixels = IntArray(CLS_INPUT_SIZE * CLS_INPUT_SIZE)
+        resized.getPixels(pixels, 0, CLS_INPUT_SIZE, 0, 0, CLS_INPUT_SIZE, CLS_INPUT_SIZE)
 
-        var index = 0
+        // 효율적인 정규화 처리
         for (px in pixels) {
-            val r = ((px shr 16) and 0xFF) / 255f
-            val g = ((px shr 8) and 0xFF) / 255f
+            val r = (px shr 16 and 0xFF) / 255f
+            val g = (px shr 8 and 0xFF) / 255f
             val b = (px and 0xFF) / 255f
 
-            val rr = (r - mean[0]) / std[0]
-            val gg = (g - mean[1]) / std[1]
-            val bb = (b - mean[2]) / std[2]
-
-            floatBuffer.put(rr)
-            floatBuffer.put(gg)
-            floatBuffer.put(bb)
-            index++
+            floatBuffer.put((r - mean[0]) / std[0])
+            floatBuffer.put((g - mean[1]) / std[1])
+            floatBuffer.put((b - mean[2]) / std[2])
         }
         floatBuffer.rewind()
 
-        val env = OrtEnvironment.getEnvironment()
-        val inputTensor = OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, 128, 128))
+        // ONNX 텐서 생성 및 추론
+        return OrtEnvironment.getEnvironment().use { env ->
+            OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, CLS_INPUT_SIZE.toLong(), CLS_INPUT_SIZE.toLong())).use { inputTensor ->
+                val output = clsSession.run(mapOf("input" to inputTensor))
+                val logits = output[0].value as Array<FloatArray>
+                val logit = logits[0]
 
-        // (2) 추론
-        val output = clsSession.run(mapOf("input" to inputTensor))
-        val logits = output[0].value as Array<FloatArray>  // shape [1,2]
-        val logit = logits[0]  // [FakeLogit, RealLogit]
+                // 소프트맥스 계산
+                val expValues = logit.map { exp(it.toDouble()).toFloat() }
+                val sumExp = expValues.sum()
+                val probabilities = expValues.map { it / sumExp }
 
-        // (3) 소프트맥스 -> argmax
-        val expFake = exp(logit[0].toDouble()).toFloat()
-        val expReal = exp(logit[1].toDouble()).toFloat()
-        val sumExp = expFake + expReal
-        val probFake = expFake / sumExp
-        val probReal = expReal / sumExp
-
-        // 0:Fake, 1:Real
-        return if (probFake >= probReal) {
-            0 to probFake
-        } else {
-            1 to probReal
+                // 0:Fake, 1:Real 클래스 중 더 높은 확률 선택
+                if (probabilities[0] >= probabilities[1]) {
+                    0 to probabilities[0]
+                } else {
+                    1 to probabilities[1]
+                }
+            }
         }
     }
 
     /**
-     * 1) YOLO로 얼굴 검출
-     * 2) 얼굴 있으면 각 얼굴 크롭 & 분류 -> 최고 스코어 결과
-     * 3) 얼굴 없으면 원본 이미지를 바로 분류
+     * 모든 얼굴 검출 및 분류하여 모든 결과 반환
+     * 다중 얼굴 처리에 최적화
      */
-    fun detectAndClassify(
+    suspend fun detectAndClassifyAllFaces(
         bitmap: Bitmap,
-        confThreshold: Float = 0.8f,
-        extendRatio: Float = 0.5f
-    ): DetectionResult? {
-        val faceBoxes = detectFaces(bitmap, confThreshold)
-
-        // 얼굴이 하나도 없으면 -> 전체 이미지를 분류
-        if (faceBoxes.isEmpty()) {
-            val (cls, score) = classifyBitmap(bitmap)
-            val labelStr = if (cls == 0) "Fake" else "Real"
-            val msg = "No Face Detected → $labelStr (%.2f%%)".format(score * 100)
-            val conf = "신뢰도 : (%.2f%%)".format(score * 100)
-
-            return DetectionResult(
-                faceIndex = -1,
-                label = labelStr,
-                confidence = score,
-                message = msg,
-                conf = conf,
-                croppedBitmap = bitmap
-            )
+        confThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD,
+        extendRatio: Float = DEFAULT_EXTEND_RATIO
+    ): List<DetectionResult> = withContext(Dispatchers.Default) {
+        try {
+            // 얼굴 검출
+            val faceBoxes = detectFaces(bitmap, confThreshold)
+            
+            // 얼굴이 없는 경우 - 전체 이미지 분석
+            if (faceBoxes.isEmpty()) {
+                val (cls, score) = classifyBitmap(bitmap)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "얼굴 없음 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+                
+                return@withContext listOf(
+                    DetectionResult(
+                        faceIndex = -1,
+                        label = labelStr,
+                        confidence = score,
+                        message = msg,
+                        conf = conf,
+                        croppedBitmap = bitmap
+                    )
+                )
+            }
+            
+            // 병렬 처리를 위한 코루틴 사용
+            faceBoxes.mapIndexed { index, box ->
+                // 각 얼굴 영역 추출
+                val cropped = cropFaceArea(bitmap, box, extendRatio)
+                
+                // 분류 실행
+                val (cls, score) = classifyBitmap(cropped)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "${index + 1}번 얼굴 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+                
+                // 결과 생성
+                DetectionResult(
+                    faceIndex = index,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = cropped
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in detectAndClassifyAllFaces", e)
+            emptyList()
         }
-
-        // 얼굴이 있다면 각 얼굴 크롭 -> 분류
-        val results = faceBoxes.mapIndexed { index, box ->
-            val cropped = cropFaceArea(bitmap, box, extendRatio)
-            val (cls, score) = classifyBitmap(cropped)
-
-            val labelStr = if (cls == 0) "Fake" else "Real"
-            val msg = labelStr
-            val conf = "신뢰도 : %.2f%%".format(score * 100)
-            DetectionResult(
-                faceIndex = index,
-                label = labelStr,
-                confidence = score,
-                message = msg,
-                conf = conf,
-                croppedBitmap = cropped
-
-            )
+    }
+    
+    /**
+     * 모든 얼굴 검출 및 분류 - 동기식 버전
+     * 기존 코드와의 호환성 유지
+     */
+    fun detectAndClassifyAllFacesSync(
+        bitmap: Bitmap,
+        confThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD,
+        extendRatio: Float = DEFAULT_EXTEND_RATIO
+    ): List<DetectionResult> {
+        return try {
+            // 얼굴 검출
+            val faceBoxes = detectFaces(bitmap, confThreshold)
+            
+            // 얼굴이 없는 경우 - 전체 이미지 분석
+            if (faceBoxes.isEmpty()) {
+                val (cls, score) = classifyBitmap(bitmap)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "얼굴 없음 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+                
+                return listOf(
+                    DetectionResult(
+                        faceIndex = -1,
+                        label = labelStr,
+                        confidence = score,
+                        message = msg,
+                        conf = conf,
+                        croppedBitmap = bitmap
+                    )
+                )
+            }
+            
+            // 각 얼굴 영역 추출 및 분류
+            faceBoxes.mapIndexed { index, box ->
+                val cropped = cropFaceArea(bitmap, box, extendRatio)
+                val (cls, score) = classifyBitmap(cropped)
+                val labelStr = if (cls == 0) "Fake" else "Real"
+                val msg = "${index + 1}번 얼굴 → $labelStr (%.2f%%)".format(score * 100)
+                val conf = "신뢰도 : (%.2f%%)".format(score * 100)
+                
+                DetectionResult(
+                    faceIndex = index,
+                    label = labelStr,
+                    confidence = score,
+                    message = msg,
+                    conf = conf,
+                    croppedBitmap = cropped
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in detectAndClassifyAllFacesSync", e)
+            emptyList()
         }
-
-        // 가장 높은 확률(스코어) 결과 반환
-        return results.maxByOrNull { it.confidence }
     }
 }

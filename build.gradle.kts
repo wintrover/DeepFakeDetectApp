@@ -7,7 +7,7 @@ plugins {
 buildscript {
     dependencies {
         // Android Gradle 플러그인 및 Kotlin 플러그인
-        classpath("com.android.tools.build:gradle:8.8.0")
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
     }
 }

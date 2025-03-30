@@ -37,14 +37,17 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
     }
 }
 
@@ -69,6 +72,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
     implementation ("androidx.compose.material:material-icons-extended:1.7.6")
 
+    // Compose ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    
     implementation ("org.pytorch:pytorch_android:2.1.0") // PyTorch
     implementation ("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
     implementation ("com.airbnb.android:lottie-compose:6.6.2")
