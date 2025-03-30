@@ -89,7 +89,7 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 
 
 ## 📄 License
-Apache License 2.0  
+MIT License  
 Model files and training data may have separate licensing.
 - Additional Notes:
   - XML: snake_case naming
