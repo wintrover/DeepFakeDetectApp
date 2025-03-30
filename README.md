@@ -1,11 +1,21 @@
 # Blue Check - Deepfake Detection Android Application
 
-[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.kr.md)
-
-<img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
+<div align="center">
+  <img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
+  <br>
+  
+  [![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.kr.md)
+</div>
 
 ## 📖 Overview
 Blue Check is an Android application that detects deepfakes in images using YOLO object detection model and ONNX runtime-based deep learning model. Features modern UI implemented with Jetpack Compose and real-time analysis capabilities.
+
+## 🎬 Demo
+<div align="center">
+  <a href="https://youtu.be/O3X-rWDxpi8">
+    <img src="https://img.youtube.com/vi/O3X-rWDxpi8/0.jpg" alt="Blue Check App Demo" style="width:300px; height:auto;"/>
+  </a>
+</div>
 
 ## ✨ Key Features
 - **Deepfake Detection**:
@@ -51,23 +61,26 @@ Blue Check is an Android application that detects deepfakes in images using YOLO
 - Android SDK 34 (API 34)
 
 ### Installation
+Clone the repository:
 ```bash
 git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
-
-## Running the App
-- Open MainActivity.kt in Android Studio
-- Run on physical device or emulator
+### Running the App
+- Open project in Android Studio
+- Build and run on a physical device or emulator
 
 ## 🖥 Usage
-1. Image Upload
-- [Select Image] button: Access local gallery
-- [Input Image URL] button: Enter web image URL
-2. Add Verification Mark
-- For "Real" results: Activate [Auth Mark] button → Save to gallery
+1. **Image Upload**
+   - [Select Image] button: Access local gallery
+   - [Input Image URL] button: Enter web image URL
+2. **Detection Process**
+   - The app automatically analyzes the image for deepfakes
+   - Results are displayed with confidence score
+3. **Add Verification Mark**
+   - For "Real" results: Activate [Auth Mark] button → Save to gallery
 
-📁 Project Structure
+## 📁 Project Structure
 ```
 .
 ├── app
@@ -86,7 +99,6 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 │ │    └── deepfake_binary_s128_e5_early.onnx # Classification
 └── build.gradle # Dependency management
 ```
-
 
 ## 📄 License
 MIT License  
@@ -107,4 +119,5 @@ Team Name: CloseAI
 | UI/UX Design | Soyeon Kim |
 
 ## 📬 Contact
+For inquiries, please contact:  
 wintrover@gmail.com  

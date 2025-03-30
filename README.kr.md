@@ -1,12 +1,22 @@
 # BLUE CHECK - 딥페이크 탐지 안드로이드 애플리케이션
 
-[![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.kr.md)
-
-<img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
+<div align="center">
+  <img src="app/src/main/res/drawable/logo2.png" alt="Project Logo" style="width:200px; height:auto;"/>
+  <br>
+  
+  [![English](https://img.shields.io/badge/language-English-blue.svg)](README.md) [![한국어](https://img.shields.io/badge/language-한국어-red.svg)](README.kr.md)
+</div>
 
 ## 📖 개요
-Blue Check는 YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용해 이미지 내 딥페이크를 탐지하는 안드로이드 앱입니다. </br>
+Blue Check는 YOLO 객체 감지 모델과 ONNX 런타임 기반의 딥러닝 모델을 활용해 이미지 내 딥페이크를 탐지하는 안드로이드 앱입니다.  
 Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공합니다.
+
+## 🎬 데모
+<div align="center">
+  <a href="https://youtu.be/O3X-rWDxpi8">
+    <img src="https://img.youtube.com/vi/O3X-rWDxpi8/0.jpg" alt="Blue Check 앱 데모" style="width:300px; height:auto;"/>
+  </a>
+</div>
 
 ## ✨ 주요 기능
 - **Deepfake 탐지**:
@@ -52,22 +62,26 @@ Jetpack Compose로 구현된 현대적 UI와 실시간 분석 기능을 제공�
 - Android SDK 34 (API 34)
 
 ### 설치 방법
+저장소 복제:
 ```bash
 git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
-## 앱 실행
-- Android Studio에서 MainActivity.kt를 실행
-- 물리 기기 또는 에뮬레이터에서 실행 가능
+### 앱 실행
+- Android Studio에서 프로젝트 열기
+- 물리 기기 또는 에뮬레이터에서 빌드 및 실행
 
 ## 🖥 사용 방법
-1. 이미지 업로드
-- [이미지 선택] 버튼: 로컬 갤러리 접근
-- [이미지 주소 입력] 버튼: 웹 이미지 URL 입력
-2. 인증 마크 추가
-- Real 판정 시 [인증마크] 버튼 활성화 → 갤러리에 저장
+1. **이미지 업로드**
+   - [이미지 선택] 버튼: 로컬 갤러리 접근
+   - [이미지 주소 입력] 버튼: 웹 이미지 URL 입력
+2. **탐지 과정**
+   - 앱이 자동으로 이미지의 딥페이크 여부 분석
+   - 결과가 신뢰도 점수와 함께 표시됨
+3. **인증 마크 추가**
+   - Real 판정 시 [인증마크] 버튼 활성화 → 갤러리에 저장
 
-📁 프로젝트 구조
+## 📁 프로젝트 구조
 ```bash
 .
 ├── app
@@ -88,15 +102,15 @@ git clone https://github.com/wintrover/DeepFakeDetectApp.git
 ```
 
 ## 📄 라이선스
-MIT License </br>
+MIT License  
 모델 파일 및 학습 데이터는 별도 라이선스가 적용될 수 있습니다.
 - 기타사항
   - XML: snake_case 네이밍
   - 컴포즈: Material3 디자인 가이드라인 적용
   - Kotlin: Android Kotlin Style Guide 준수
     
-## 🤝 기여
-팀 이름 : CloseAI
+## 🤝 팀
+팀 이름: CloseAI
 
 | 역할 | 이름 |
 |------|------|
@@ -105,5 +119,6 @@ MIT License </br>
 | 앱 제작 | 김가람 |
 | UI/UX 디자인 | 김소연 |
 
-## 📬 문의
-wintrover@gmail.com </br>
+## 📬 연락처
+문의 사항은 다음 주소로 연락주세요:  
+wintrover@gmail.com
